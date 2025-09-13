@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "mobile-app",
+    "slug": "mobile-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "mobileapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "sdkVersion": "54.0.0",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "server"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
