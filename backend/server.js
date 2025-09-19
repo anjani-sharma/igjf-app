@@ -1,27 +1,31 @@
-// backend/server.js - COMPLETE FIXED VERSION
+// backend/server.js - FIXED VERSION
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
 const { sequelize } = require('./config/database');
+
+// Import models to ensure associations are loaded
+require('./models/index');
+
 const authRoutes = require('./routes/auth');
 const memberRoutes = require('./routes/members');
+const eventRoutes = require('./routes/events');
 
-const app = express();
+const app = express(); // ← This line must come BEFORE any app.use() calls
 const PORT = process.env.PORT || 5000;
 
 console.log('🚀 Starting server...');
 
-// CORS configuration - CRITICAL FOR MOBILE APP
+// CORS configuration
 app.use(cors({
-  origin: '*', // Allow all origins for development
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: false
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
 // Body parsing middleware
@@ -34,7 +38,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files (profile photos)
+// Debug middleware for attendance requests (MOVED AFTER app creation)
+app.use('/api/events/attendance', (req, res, next) => {
+  console.log('🔍 Attendance API called:', {
+    method: req.method,
+    url: req.url,
+    body: req.body,
+    headers: {
+      authorization: req.headers.authorization ? 'Bearer ***' : 'No auth',
+      contentType: req.headers['content-type']
+    }
+  });
+  next();
+});
+
+// Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
@@ -43,7 +61,7 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     message: 'Server is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.1.0'
   });
 });
 
@@ -55,7 +73,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       auth: '/api/auth',
-      members: '/api/members'
+      members: '/api/members',
+      events: '/api/events'
     }
   });
 });
@@ -63,8 +82,19 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
+app.use('/api/events', eventRoutes);
 
-// Error handling middleware
+// Error handling middleware for attendance route
+app.use('/api/events/attendance', (err, req, res, next) => {
+  console.error('❌ Attendance API Error:', err);
+  res.status(500).json({ 
+    success: false, 
+    message: 'Attendance API error', 
+    error: err.message 
+  });
+});
+
+// General error handling middleware
 app.use((err, req, res, next) => {
   console.error('❌ Server error:', err);
   res.status(500).json({ 
@@ -90,18 +120,19 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connected successfully');
 
-    console.log('🔄 Syncing database...');
+    console.log('📄 Syncing database...');
     await sequelize.sync({ alter: true });
     console.log('✅ Database synced');
 
     // Start listening
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log('🎉 Server started successfully!');
-      console.log('📍 Server running on:');
+      console.log('🔗 Server running on:');
       console.log(`   - Local: http://localhost:${PORT}`);
       console.log(`   - Network: http://192.168.1.65:${PORT}`);
       console.log('📱 API Base URL: http://192.168.1.65:5000/api');
-      console.log('🔍 Health Check: http://192.168.1.65:5000/health');
+      console.log('🏥 Health Check: http://192.168.1.65:5000/health');
+      console.log('📅 Events API: http://192.168.1.65:5000/api/events');
       console.log('='.repeat(50));
     });
 

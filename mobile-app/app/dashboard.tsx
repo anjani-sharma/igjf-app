@@ -289,7 +289,7 @@ export default function Dashboard() {
               </View>
               */}
               
-              <Text style={styles.partyName}>GORKHA JANSHAKTI FRONT</Text>
+              <Text style={styles.partyName}>INDIAN GORKHA JANSHAKTI FRONT</Text>
             </View>
 
             {/* NEW LAYOUT: QR code left, Profile picture right */}
@@ -378,12 +378,21 @@ export default function Dashboard() {
               <Text style={styles.actionLabel}>Edit Profile</Text>
             </TouchableOpacity>
 
+            {/* ADD THIS NEW EVENTS BUTTON */}
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/events')}
+            >
+              <Text style={styles.actionIcon}>📅</Text>
+              <Text style={styles.actionLabel}>Events</Text>
+            </TouchableOpacity>
+
             {isAdmin() && (
               <TouchableOpacity
                 style={[styles.actionCard, styles.adminAction]}
                 onPress={() => router.push('/admin')}
               >
-                <Text style={styles.actionIcon}>🏛️</Text>
+                <Text style={styles.actionIcon}>🛠️</Text>
                 <Text style={[styles.actionLabel, styles.adminActionText]}>Admin Dashboard</Text>
               </TouchableOpacity>
             )}

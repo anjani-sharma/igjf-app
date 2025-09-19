@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   backButton: {
     marginBottom: 20,
@@ -172,9 +172,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   partyName: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'green',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 20, // reduced from 40 to accommodate the image
+    paddingHorizontal: 20,
+    paddingTop: 40, // reduced from 40 to accommodate the image
   },
   
   input: {

@@ -1,3 +1,4 @@
+// mobile-app/app/_layout.tsx - UPDATED with Events routes
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 
@@ -13,6 +14,14 @@ export default function RootLayout() {
         <Stack.Screen name="scanner" />
         <Stack.Screen name="members" />
         <Stack.Screen name="roles" />
+        <Stack.Screen name="profile-edit" />
+        
+        {/* NEW: Events-related screens */}
+        <Stack.Screen name="events" />
+        <Stack.Screen name="create-event" />
+        <Stack.Screen name="event-detail" />
+        <Stack.Screen name="attendance-scanner" />
+        <Stack.Screen name="location-attendance" />
       </Stack>
     </AuthProvider>
   );

@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
   welcomeSection: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 40,
   },
   title: {
     fontSize: 36,
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#E0E0E0',
+    color: '#ded675',
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -173,12 +173,12 @@ const styles = StyleSheet.create({
   imageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 5,
     width: '100%'
   },
   flagImage: {
     width: 250,
-    height: 200,
-    marginVertical: 10
+    height: 150,
+    marginVertical: 5
   },
 });

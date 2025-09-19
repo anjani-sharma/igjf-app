@@ -9,28 +9,30 @@ PROJECT STRUCTURE:
 │   ├── config
 │   │   └── database.js
 │   ├── controllers
+│   │   ├── attendanceController.js
 │   │   ├── authController.js
+│   │   ├── eventController.js
 │   │   └── memberController.js
 │   ├── database.sqlite
+│   ├── debug-events.js
 │   ├── debug-server.js
 │   ├── middleware
 │   │   └── auth.js
 │   ├── models
-│   │   └── User.js
+│   │   ├── Attendance.js
+│   │   ├── Event.js
+│   │   ├── User.js
+│   │   └── index.js
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── routes
 │   │   ├── auth.js
+│   │   ├── events.js
 │   │   └── members.js
 │   ├── scripts
-│   │   ├── addAadharFieldsToExisting.js
-│   │   ├── createAdmin.js
-│   │   └── fixAadharValidation.js
 │   ├── server.js
 │   ├── services
 │   │   └── emailService.js
-│   ├── test-server-with-db.js
-│   ├── test-server.js
 │   └── uploads
 │       ├── 1758129565426.jpg
 │       └── 1758131445094.jpg
@@ -45,10 +47,15 @@ PROJECT STRUCTURE:
 │   ├── app
 │   │   ├── _layout.tsx
 │   │   ├── admin.tsx
+│   │   ├── attendance-scanner.tsx
+│   │   ├── create-event.tsx
 │   │   ├── dashboard.tsx
+│   │   ├── event-detail.tsx
+│   │   ├── events.tsx
 │   │   ├── images
 │   │   │   └── flag.jpeg
 │   │   ├── index.tsx
+│   │   ├── location-attendance.tsx
 │   │   ├── login.tsx
 │   │   ├── members.tsx
 │   │   ├── profile-edit.tsx
@@ -99,9 +106,7 @@ PROJECT STRUCTURE:
 │   └── utils
 │       └── apiUtils.ts
 ├── project_code.txt
-├── project_code1.txt
-├── project_code2.txt
-└── rebuild_mobile_app.py
+└── project_code1.txt
 
 
 ================ CODE =================
@@ -170,819 +175,6 @@ with open(output_file, "w", encoding="utf-8") as outfile:
                 except Exception as e:
                     outfile.write(f"\n\n# ==== {normalized_path} (ERROR READING: {e}) ====\n\n")
 
-
-# ==== ./rebuild_mobile_app.py ====
-
-#!/usr/bin/env python3
-"""
-Mobile App Directory Rebuild Script
-This script recreates the entire mobile-app folder structure with all files
-"""
-
-import os
-import json
-
-def create_directory_structure():
-    """Create all the directories needed for the mobile app"""
-    directories = [
-        "mobile-app",
-        "mobile-app/.expo",
-        "mobile-app/.expo/types",
-        "mobile-app/.vscode",
-        "mobile-app/app",
-        "mobile-app/assets",
-        "mobile-app/assets/fonts",
-        "mobile-app/assets/images",
-        "mobile-app/components",
-        "mobile-app/components/ui",
-        "mobile-app/constants",
-        "mobile-app/contexts",
-        "mobile-app/hooks",
-        "mobile-app/scripts",
-        "mobile-app/src",
-        "mobile-app/src/components",
-        "mobile-app/src/context",
-        "mobile-app/src/screens",
-        "mobile-app/src/services"
-    ]
-    
-    for directory in directories:
-        os.makedirs(directory, exist_ok=True)
-        print(f"✅ Created directory: {directory}")
-
-def create_package_json():
-    """Create package.json file"""
-    package_json = {
-        "name": "mobile-app",
-        "main": "expo-router/entry",
-        "version": "1.0.0",
-        "scripts": {
-            "start": "expo start",
-            "android": "expo start --android",
-            "ios": "expo start --ios",
-            "web": "expo start --web",
-            "reset-project": "node ./scripts/reset-project.js"
-        },
-        "dependencies": {
-            "@expo/metro-runtime": "~6.1.2",
-            "@expo/vector-icons": "^15.0.2",
-            "@react-native-async-storage/async-storage": "2.2.0",
-            "expo": "^54.0.0",
-            "expo-barcode-scanner": "~14.0.0",
-            "expo-camera": "~17.0.7",
-            "expo-constants": "~18.0.8",
-            "expo-font": "~14.0.8",
-            "expo-image-picker": "~17.0.8",
-            "expo-linking": "~8.0.8",
-            "expo-router": "~6.0.3",
-            "expo-splash-screen": "~31.0.10",
-            "react": "19.1.0",
-            "react-native": "0.81.4",
-            "react-native-qrcode-svg": "^6.3.15",
-            "react-native-safe-area-context": "~5.6.0",
-            "react-native-screens": "~4.16.0",
-            "react-native-svg": "15.12.1",
-            "expo-status-bar": "~3.0.8"
-        },
-        "devDependencies": {
-            "@babel/core": "^7.25.2",
-            "@types/react": "~19.1.10",
-            "typescript": "~5.9.2"
-        },
-        "private": True
-    }
-    
-    with open("mobile-app/package.json", "w") as f:
-        json.dump(package_json, f, indent=2)
-    print("✅ Created package.json")
-
-def create_app_json():
-    """Create app.json file"""
-    app_json = {
-        "expo": {
-            "name": "mobile-app",
-            "slug": "mobile-app",
-            "version": "1.0.0",
-            "orientation": "portrait",
-            "scheme": "mobileapp",
-            "userInterfaceStyle": "automatic",
-            "newArchEnabled": True,
-            "sdkVersion": "54.0.0",
-            "ios": {
-                "supportsTablet": True
-            },
-            "android": {
-                "adaptiveIcon": {
-                    "backgroundColor": "#ffffff"
-                },
-                "edgeToEdgeEnabled": True
-            },
-            "web": {
-                "bundler": "metro",
-                "output": "server"
-            },
-            "plugins": [
-                "expo-router"
-            ]
-        }
-    }
-    
-    with open("mobile-app/app.json", "w") as f:
-        json.dump(app_json, f, indent=2)
-    print("✅ Created app.json")
-
-def create_tsconfig():
-    """Create tsconfig.json"""
-    tsconfig = {
-        "compilerOptions": {},
-        "extends": "expo/tsconfig.base"
-    }
-    
-    with open("mobile-app/tsconfig.json", "w") as f:
-        json.dump(tsconfig, f, indent=2)
-    print("✅ Created tsconfig.json")
-
-def create_eslint_config():
-    """Create eslint.config.js"""
-    eslint_content = '''// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
-
-module.exports = defineConfig([
-  expoConfig,
-  {
-    ignores: ['dist/*'],
-  },
-]);
-'''
-    
-    with open("mobile-app/eslint.config.js", "w") as f:
-        f.write(eslint_content)
-    print("✅ Created eslint.config.js")
-
-def create_expo_files():
-    """Create .expo directory files"""
-    # devices.json
-    devices_json = {"devices": []}
-    with open("mobile-app/.expo/devices.json", "w") as f:
-        json.dump(devices_json, f, indent=2)
-    
-    print("✅ Created .expo/devices.json")
-
-def create_vscode_settings():
-    """Create .vscode/settings.json"""
-    settings = {
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit",
-            "source.organizeImports": "explicit",
-            "source.sortMembers": "explicit"
-        }
-    }
-    
-    with open("mobile-app/.vscode/settings.json", "w") as f:
-        json.dump(settings, f, indent=2)
-    print("✅ Created .vscode/settings.json")
-
-def create_constants():
-    """Create constants/Colors.ts"""
-    colors_content = '''/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
-};
-'''
-    
-    with open("mobile-app/constants/Colors.ts", "w") as f:
-        f.write(colors_content)
-    print("✅ Created constants/Colors.ts")
-
-def create_auth_context():
-    """Create contexts/AuthContext.tsx"""
-    auth_context_content = '''import React, { createContext, useState, useContext, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface User {
-  id: string;
-  membershipId: string;
-  name: string;
-  email: string;
-  role: string;
-  qrCode?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (token: string, userData: User) => Promise<void>;
-  logout: () => Promise<void>;
-  loading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const userData = await AsyncStorage.getItem('user');
-      
-      if (token && userData) {
-        setUser(JSON.parse(userData));
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (token: string, userData: User) => {
-    try {
-      await AsyncStorage.setItem('token', token);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } catch (error) {
-      console.error('Error saving user data:', error);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      setUser(null);
-    } catch (error) {
-      console.error('Error removing user data:', error);
-    }
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-'''
-    
-    with open("mobile-app/contexts/AuthContext.tsx", "w") as f:
-        f.write(auth_context_content)
-    print("✅ Created contexts/AuthContext.tsx")
-
-def create_hooks():
-    """Create hook files"""
-    # useColorScheme.ts
-    color_scheme_content = "export { useColorScheme } from 'react-native';"
-    with open("mobile-app/hooks/useColorScheme.ts", "w") as f:
-        f.write(color_scheme_content)
-    
-    # useColorScheme.web.ts
-    color_scheme_web_content = '''import { useEffect, useState } from 'react';
-import { useColorScheme as useRNColorScheme } from 'react-native';
-
-/**
- * To support static rendering, this value needs to be re-calculated on the client side for web
- */
-export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
-
-  const colorScheme = useRNColorScheme();
-
-  if (hasHydrated) {
-    return colorScheme;
-  }
-
-  return 'light';
-}
-'''
-    with open("mobile-app/hooks/useColorScheme.web.ts", "w") as f:
-        f.write(color_scheme_web_content)
-    
-    # useThemeColor.ts
-    theme_color_content = '''/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
-
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
-) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
-}
-'''
-    with open("mobile-app/hooks/useThemeColor.ts", "w") as f:
-        f.write(theme_color_content)
-    
-    print("✅ Created hook files")
-
-def create_app_layout():
-    """Create app/_layout.tsx"""
-    layout_content = '''import { Stack } from 'expo-router';
-import { AuthProvider } from '../contexts/AuthContext';
-
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="dashboard" />
-        <Stack.Screen name="admin" />
-        <Stack.Screen name="scanner" />
-        <Stack.Screen name="members" />
-        <Stack.Screen name="roles" />
-      </Stack>
-    </AuthProvider>
-  );
-}
-'''
-    
-    with open("mobile-app/app/_layout.tsx", "w") as f:
-        f.write(layout_content)
-    print("✅ Created app/_layout.tsx")
-
-def create_app_index():
-    """Create app/index.tsx"""
-    index_content = '''import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
-import { useAuth } from '../contexts/AuthContext';
-
-export default function WelcomeScreen() {
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (!loading) {
-      if (user) {
-        // User is logged in, redirect based on role
-        if (user.role === 'admin') {
-          router.replace('/admin');
-        } else {
-          router.replace('/dashboard');
-        }
-      }
-    }
-  }, [user, loading]);
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-        <StatusBar style="light" />
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.logoSection}>
-          <Text style={styles.partyName}>POLITICAL PARTY</Text>
-          <Text style={styles.tagline}>Member Management System</Text>
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.welcomeSection}>
-          <Text style={styles.title}>Welcome</Text>
-          <Text style={styles.subtitle}>
-            Manage your party membership with ease
-          </Text>
-        </View>
-
-        <View style={styles.buttonSection}>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => router.push('/login')}
-          >
-            <Text style={styles.loginButtonText}>Member Login</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={() => router.push('/register')}
-          >
-            <Text style={styles.registerButtonText}>
-              Register as New Member
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <StatusBar style="light" />
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1B2951',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: 'white',
-    fontSize: 18,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 30,
-    alignItems: 'center',
-  },
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  partyName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2D5016',
-    marginBottom: 5,
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#E0E0E0',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 30,
-    justifyContent: 'center',
-  },
-  welcomeSection: {
-    alignItems: 'center',
-    marginBottom: 60,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 15,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#E0E0E0',
-    textAlign: 'center',
-    lineHeight: 26,
-  },
-  buttonSection: {
-    gap: 20,
-  },
-  loginButton: {
-    backgroundColor: '#2D5016',
-    paddingVertical: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  registerButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'white',
-    paddingVertical: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  registerButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-});
-'''
-    
-    with open("mobile-app/app/index.tsx", "w") as f:
-        f.write(index_content)
-    print("✅ Created app/index.tsx")
-
-def create_root_app_js():
-    """Create root App.js file"""
-    app_js_content = '''import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>🚀 NEW APP WORKING!</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'red',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 30,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-});
-'''
-    
-    with open("mobile-app/App.js", "w") as f:
-        f.write(app_js_content)
-    print("✅ Created App.js")
-
-def create_login_screen():
-    """Create a basic login screen"""
-    login_content = '''import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
-import { useAuth } from '../contexts/AuthContext';
-
-const API_URL = 'http://localhost:3001/api';
-
-export default function LoginScreen() {
-  const [membershipId, setMembershipId] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-
-  const handleLogin = async () => {
-    if (!membershipId.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          membershipId: membershipId.trim(),
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await login(data.token, data.user);
-        
-        // Navigate based on user role
-        if (data.user.role === 'admin') {
-          router.replace('/admin');
-        } else {
-          router.replace('/dashboard');
-        }
-      } else {
-        Alert.alert('Login Failed', data.message || 'Invalid credentials');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.logoSection}>
-          <Text style={styles.partyName}>POLITICAL PARTY</Text>
-          <Text style={styles.title}>Member Login</Text>
-        </View>
-      </View>
-
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Membership ID"
-          value={membershipId}
-          onChangeText={setMembershipId}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <TouchableOpacity
-          style={[styles.loginButton, loading && styles.disabledButton]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.loginButtonText}>
-            {loading ? 'Logging in...' : 'Login'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <StatusBar style="light" />
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1B2951',
-  },
-  header: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  backButtonText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  logoSection: {
-    alignItems: 'center',
-  },
-  partyName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  form: {
-    flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 40,
-  },
-  input: {
-    backgroundColor: 'white',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  loginButton: {
-    backgroundColor: '#2D5016',
-    paddingVertical: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#999',
-  },
-});
-'''
-    
-    with open("mobile-app/app/login.tsx", "w") as f:
-        f.write(login_content)
-    print("✅ Created app/login.tsx")
-
-def main():
-    """Main function to create the entire mobile app structure"""
-    print("🚀 Starting Mobile App Rebuild...")
-    print("=" * 50)
-    
-    # Create directory structure
-    create_directory_structure()
-    print()
-    
-    # Create configuration files
-    create_package_json()
-    create_app_json()
-    create_tsconfig()
-    create_eslint_config()
-    create_expo_files()
-    create_vscode_settings()
-    print()
-    
-    # Create source files
-    create_constants()
-    create_auth_context()
-    create_hooks()
-    print()
-    
-    # Create app files
-    create_app_layout()
-    create_app_index()
-    create_login_screen()
-    create_root_app_js()
-    print()
-    
-    print("=" * 50)
-    print("✅ Mobile App Structure Created Successfully!")
-    print()
-    print("Next steps:")
-    print("1. cd mobile-app")
-    print("2. npm install")
-    print("3. npx expo start")
-    print()
-    print("Note: This script created the basic structure and core files.")
-    print("You'll need to add the remaining app screens (register, dashboard, scanner, etc.)")
-    print("using the code from the previous artifacts.")
-
-if __name__ == "__main__":
-    main()
 
 # ==== ./mobile-app/app.json ====
 
@@ -1805,6 +997,270 @@ const styles = StyleSheet.create({
   },
 });
 
+# ==== ./mobile-app/app/location-attendance.tsx ====
+
+// mobile-app/app/location-attendance.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+    },
+    border: '#eee',
+  },
+  spacing: {
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    lg: 12,
+  },
+};
+
+const LOCATIONS = [
+  {
+    id: 'central',
+    name: 'Central Party Office',
+    address: 'Main headquarters, Darjeeling',
+    icon: '🏛️',
+    description: 'Main party headquarters for administrative work'
+  },
+  {
+    id: 'darjeeling',
+    name: 'Party Office Darjeeling',
+    address: 'Darjeeling district office',
+    icon: '🏢',
+    description: 'District office for Darjeeling region'
+  },
+  {
+    id: 'kalimpong',
+    name: 'Party Office Kalimpong',
+    address: 'Kalimpong district office',
+    icon: '🏢',
+    description: 'District office for Kalimpong region'
+  },
+  {
+    id: 'kurseong',
+    name: 'Party Office Kurseong',
+    address: 'Kurseong district office',
+    icon: '🏢',
+    description: 'District office for Kurseong region'
+  },
+];
+
+export default function LocationAttendanceScreen() {
+  const { user } = useAuth();
+
+  const isOrganizer = () => user?.role === 'organizer' || user?.role === 'admin';
+
+  const handleLocationSelect = (location) => {
+    // Navigate to attendance scanner with selected location
+    router.push({
+      pathname: '/attendance-scanner',
+      params: { 
+        scanType: 'location',
+        selectedLocation: location.name 
+      }
+    });
+  };
+
+  const renderLocationItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.locationCard}
+      onPress={() => handleLocationSelect(item)}
+    >
+      <View style={styles.locationHeader}>
+        <Text style={styles.locationIcon}>{item.icon}</Text>
+        <View style={styles.locationInfo}>
+          <Text style={styles.locationName}>{item.name}</Text>
+          <Text style={styles.locationAddress}>{item.address}</Text>
+        </View>
+        <Text style={styles.locationArrow}>→</Text>
+      </View>
+      <Text style={styles.locationDescription}>{item.description}</Text>
+    </TouchableOpacity>
+  );
+
+  if (!isOrganizer()) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Location Attendance</Text>
+        </View>
+        <View style={styles.accessDenied}>
+          <Text style={styles.accessDeniedText}>Access Denied</Text>
+          <Text style={styles.accessDeniedSubtext}>Only organizers can mark location attendance</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Location Attendance</Text>
+      </View>
+
+      <View style={styles.content}>
+        <View style={styles.instructionCard}>
+          <Text style={styles.instructionTitle}>📍 Location-Based Attendance</Text>
+          <Text style={styles.instructionText}>
+            Select a party office location to mark member attendance for visits and meetings at that location.
+          </Text>
+        </View>
+
+        <FlatList
+          data={LOCATIONS}
+          renderItem={renderLocationItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.locationsList}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+
+      <StatusBar style="light" />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  header: {
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+  },
+  title: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.onPrimary,
+    flex: 1,
+    textAlign: 'center',
+    marginLeft: Theme.spacing.md,
+  },
+  content: {
+    flex: 1,
+    padding: Theme.spacing.lg,
+  },
+  instructionCard: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: Theme.colors.secondary,
+  },
+  instructionTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  instructionText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    lineHeight: 24,
+  },
+  locationsList: {
+    paddingBottom: Theme.spacing.xl,
+  },
+  locationCard: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Theme.spacing.md,
+  },
+  locationIcon: {
+    fontSize: 24,
+    marginRight: Theme.spacing.md,
+  },
+  locationInfo: {
+    flex: 1,
+  },
+  locationName: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  locationAddress: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+  },
+  locationArrow: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    fontSize: 20,
+  },
+  locationDescription: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  accessDenied: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  accessDeniedText: {
+    ...Theme.typography.h3,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  accessDeniedSubtext: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+});
+
 # ==== ./mobile-app/app/login.tsx ====
 
 // mobile-app/app/login.tsx - COMPLETE FILE
@@ -2345,7 +1801,7 @@ export default function Dashboard() {
               </View>
               */}
               
-              <Text style={styles.partyName}>GORKHA JANSHAKTI FRONT</Text>
+              <Text style={styles.partyName}>INDIAN GORKHA JANSHAKTI FRONT</Text>
             </View>
 
             {/* NEW LAYOUT: QR code left, Profile picture right */}
@@ -2434,12 +1890,21 @@ export default function Dashboard() {
               <Text style={styles.actionLabel}>Edit Profile</Text>
             </TouchableOpacity>
 
+            {/* ADD THIS NEW EVENTS BUTTON */}
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/events')}
+            >
+              <Text style={styles.actionIcon}>📅</Text>
+              <Text style={styles.actionLabel}>Events</Text>
+            </TouchableOpacity>
+
             {isAdmin() && (
               <TouchableOpacity
                 style={[styles.actionCard, styles.adminAction]}
                 onPress={() => router.push('/admin')}
               >
-                <Text style={styles.actionIcon}>🏛️</Text>
+                <Text style={styles.actionIcon}>🛠️</Text>
                 <Text style={[styles.actionLabel, styles.adminActionText]}>Admin Dashboard</Text>
               </TouchableOpacity>
             )}
@@ -3727,6 +3192,599 @@ const styles = StyleSheet.create({
 
   statusText: {
     color: Theme.colors.success,
+  },
+});
+
+# ==== ./mobile-app/app/events.tsx ====
+
+// mobile-app/app/events.tsx
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+import { apiRequest } from '../utils/apiUtils';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    accent: '#E0E0E0',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+      onSecondary: '#ffffff',
+    },
+    border: '#eee',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h1: { fontSize: 32, fontWeight: 'bold' as const },
+    h2: { fontSize: 28, fontWeight: 'bold' as const },
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+  },
+};
+
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  eventDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  address: string;
+  eventType: string;
+  maxAttendees: number;
+  isActive: boolean;
+  attendanceCount: number;
+  creator: {
+    fullName: string;
+    role: string;
+  };
+  createdAt: string;
+}
+
+export default function EventsScreen() {
+  const { user } = useAuth();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
+
+  const isAdmin = () => user?.role === 'admin';
+  const isOrganizer = () => user?.role === 'organizer' || user?.role === 'admin';
+
+  const loadEvents = useCallback(async () => {
+    try {
+      const queryParams = new URLSearchParams({
+        active: 'true',
+        ...(filter === 'upcoming' && { upcoming: 'true' }),
+        ...(filter === 'past' && { past: 'true' }),
+      });
+
+      const response = await apiRequest<{ events: Event[] }>(`/events?${queryParams}`);
+
+      if (response.success && response.data) {
+        setEvents(response.data.events);
+      } else {
+        Alert.alert('Error', 'Failed to load events');
+      }
+    } catch (error) {
+      console.error('❌ Error loading events:', error);
+      Alert.alert('Error', 'Network error while loading events');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadEvents();
+  }, [loadEvents]);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString: string) => {
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const getEventTypeColor = (eventType: string) => {
+    const colors = {
+      meeting: '#2196F3',
+      rally: '#FF5722',
+      conference: '#9C27B0',
+      community_service: '#4CAF50',
+      training: '#FF9800',
+      other: '#607D8B'
+    };
+    return colors[eventType] || colors.other;
+  };
+
+  const getEventTypeIcon = (eventType: string) => {
+    const icons = {
+      meeting: '🤝',
+      rally: '📢',
+      conference: '🎤',
+      community_service: '🤲',
+      training: '📚',
+      other: '📅'
+    };
+    return icons[eventType] || icons.other;
+  };
+
+  const renderEvent = ({ item }: { item: Event }) => {
+    const isUpcoming = new Date(item.eventDate) > new Date();
+    
+    return (
+      <TouchableOpacity
+        style={styles.eventCard}
+        onPress={() => router.push(`/event-detail?id=${item.id}`)}
+      >
+        <View style={styles.eventHeader}>
+          <View style={styles.eventTypeContainer}>
+            <Text style={styles.eventTypeIcon}>{getEventTypeIcon(item.eventType)}</Text>
+            <Text style={[
+              styles.eventType,
+              { backgroundColor: getEventTypeColor(item.eventType) }
+            ]}>
+              {item.eventType.replace('_', ' ').toUpperCase()}
+            </Text>
+          </View>
+          <Text style={[
+            styles.eventStatus,
+            { color: isUpcoming ? Theme.colors.success : Theme.colors.secondary }
+          ]}>
+            {isUpcoming ? 'UPCOMING' : 'COMPLETED'}
+          </Text>
+        </View>
+
+        <Text style={styles.eventTitle} numberOfLines={2}>{item.title}</Text>
+        
+        <View style={styles.eventDetails}>
+          <View style={styles.eventDetailRow}>
+            <Text style={styles.eventDetailIcon}>📅</Text>
+            <Text style={styles.eventDetailText}>{formatDate(item.eventDate)}</Text>
+          </View>
+          
+          <View style={styles.eventDetailRow}>
+            <Text style={styles.eventDetailIcon}>🕐</Text>
+            <Text style={styles.eventDetailText}>
+              {formatTime(item.startTime)}
+              {item.endTime && ` - ${formatTime(item.endTime)}`}
+            </Text>
+          </View>
+          
+          <View style={styles.eventDetailRow}>
+            <Text style={styles.eventDetailIcon}>📍</Text>
+            <Text style={styles.eventDetailText} numberOfLines={1}>{item.location}</Text>
+          </View>
+
+          <View style={styles.eventDetailRow}>
+            <Text style={styles.eventDetailIcon}>👥</Text>
+            <Text style={styles.eventDetailText}>
+              {item.attendanceCount} attendees
+              {item.maxAttendees && ` / ${item.maxAttendees} max`}
+            </Text>
+          </View>
+        </View>
+
+        {item.description && (
+          <Text style={styles.eventDescription} numberOfLines={2}>
+            {item.description}
+          </Text>
+        )}
+
+        <View style={styles.eventFooter}>
+          <Text style={styles.eventCreator}>
+            Created by {item.creator?.fullName} ({item.creator?.role})
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateIcon}>📅</Text>
+      <Text style={styles.emptyStateTitle}>No {filter} events</Text>
+      <Text style={styles.emptyStateText}>
+        {filter === 'upcoming' 
+          ? 'No upcoming events scheduled' 
+          : filter === 'past'
+          ? 'No past events to show'
+          : 'No events available'
+        }
+      </Text>
+      {isAdmin() && (
+        <TouchableOpacity
+          style={styles.createEventButton}
+          onPress={() => router.push('/create-event')}
+        >
+          <Text style={styles.createEventButtonText}>Create New Event</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Events</Text>
+          <View style={styles.headerRight} />
+        </View>
+        
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading events...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Events</Text>
+        <View style={styles.headerRight}>
+          {isAdmin() && (
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => router.push('/create-event')}
+            >
+              <Text style={styles.createButtonText}>+ Create</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={styles.filterContainer}>
+        {(['upcoming', 'past', 'all'] as const).map((filterType) => (
+          <TouchableOpacity
+            key={filterType}
+            style={[
+              styles.filterTab,
+              filter === filterType && styles.activeFilterTab
+            ]}
+            onPress={() => setFilter(filterType)}
+          >
+            <Text style={[
+              styles.filterTabText,
+              filter === filterType && styles.activeFilterTabText
+            ]}>
+              {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Events List */}
+      <FlatList
+        data={events}
+        renderItem={renderEvent}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          styles.listContainer,
+          events.length === 0 && styles.emptyListContainer
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Theme.colors.primary]}
+          />
+        }
+        ListEmptyComponent={renderEmptyState}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* Quick Actions for Admin/Organizer */}
+      {isOrganizer() && (
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => router.push('/attendance-scanner')}
+          >
+            <Text style={styles.quickActionIcon}>📱</Text>
+            <Text style={styles.quickActionText}>Scan QR</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => router.push('/location-attendance')}
+          >
+            <Text style={styles.quickActionIcon}>📍</Text>
+            <Text style={styles.quickActionText}>Location</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <StatusBar style="light" />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  header: {
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    minWidth: 60,
+  },
+  backButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+  },
+  title: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.onPrimary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerRight: {
+    minWidth: 60,
+    alignItems: 'flex-end',
+  },
+  createButton: {
+    backgroundColor: Theme.colors.secondary,
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.sm,
+  },
+  createButtonText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.onSecondary,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    marginTop: Theme.spacing.md,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.lg,
+    marginVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.xs,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: Theme.spacing.sm,
+    alignItems: 'center',
+    borderRadius: Theme.borderRadius.md,
+  },
+  activeFilterTab: {
+    backgroundColor: Theme.colors.primary,
+  },
+  filterTabText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+  activeFilterTabText: {
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  listContainer: {
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xl,
+  },
+  emptyListContainer: {
+    flexGrow: 1,
+  },
+  eventCard: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+    marginBottom: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Theme.spacing.sm,
+  },
+  eventTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eventTypeIcon: {
+    fontSize: 16,
+    marginRight: Theme.spacing.xs,
+  },
+  eventType: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onPrimary,
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.sm,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  eventStatus: {
+    ...Theme.typography.caption,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  eventTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  eventDetails: {
+    marginBottom: Theme.spacing.md,
+  },
+  eventDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Theme.spacing.xs,
+  },
+  eventDetailIcon: {
+    fontSize: 14,
+    width: 20,
+    marginRight: Theme.spacing.sm,
+  },
+  eventDetailText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    flex: 1,
+  },
+  eventDescription: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontStyle: 'italic',
+    marginBottom: Theme.spacing.md,
+  },
+  eventFooter: {
+    borderTopWidth: 1,
+    borderTopColor: Theme.colors.border,
+    paddingTop: Theme.spacing.sm,
+  },
+  eventCreator: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.xl,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: Theme.spacing.lg,
+    opacity: 0.3,
+  },
+  emptyStateTitle: {
+    ...Theme.typography.h3,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.sm,
+  },
+  emptyStateText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.lg,
+  },
+  createEventButton: {
+    backgroundColor: Theme.colors.secondary,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+  },
+  createEventButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onSecondary,
+    fontWeight: '600',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.lg,
+    marginBottom: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.sm,
+    gap: Theme.spacing.sm,
+  },
+  quickActionButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    backgroundColor: Theme.colors.background,
+  },
+  quickActionIcon: {
+    fontSize: 24,
+    marginBottom: Theme.spacing.xs,
+  },
+  quickActionText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.primary,
+    fontWeight: '600',
   },
 });
 
@@ -5571,6 +5629,7 @@ const styles = StyleSheet.create({
 
 # ==== ./mobile-app/app/_layout.tsx ====
 
+// mobile-app/app/_layout.tsx - UPDATED with Events routes
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 
@@ -5586,11 +5645,2267 @@ export default function RootLayout() {
         <Stack.Screen name="scanner" />
         <Stack.Screen name="members" />
         <Stack.Screen name="roles" />
+        <Stack.Screen name="profile-edit" />
+        
+        {/* NEW: Events-related screens */}
+        <Stack.Screen name="events" />
+        <Stack.Screen name="create-event" />
+        <Stack.Screen name="event-detail" />
+        <Stack.Screen name="attendance-scanner" />
+        <Stack.Screen name="location-attendance" />
       </Stack>
     </AuthProvider>
   );
 }
 
+# ==== ./mobile-app/app/create-event.tsx ====
+
+// mobile-app/app/create-event.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+import { apiRequest } from '../utils/apiUtils';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+    },
+    border: '#e0e0e0',
+    error: '#F44336',
+    success: '#4CAF50',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+  },
+};
+
+const EVENT_TYPES = [
+  { key: 'meeting', label: 'Meeting', icon: '🤝' },
+  { key: 'rally', label: 'Rally', icon: '📢' },
+  { key: 'conference', label: 'Conference', icon: '🎤' },
+  { key: 'community_service', label: 'Community Service', icon: '🤲' },
+  { key: 'training', label: 'Training', icon: '📚' },
+  { key: 'other', label: 'Other', icon: '📅' },
+];
+
+const LOCATIONS = [
+  'Central Party Office',
+  'Party Office Darjeeling',
+  'Party Office Kalimpong',
+  'Party Office Kurseong',
+  'Custom Location'
+];
+
+export default function CreateEventScreen() {
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    eventDate: '',
+    startTime: '',
+    endTime: '',
+    location: '',
+    customLocation: '',
+    address: '',
+    eventType: 'meeting',
+    maxAttendees: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Check if user is admin
+  if (user?.role !== 'admin') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Create Event</Text>
+        </View>
+        <View style={styles.accessDenied}>
+          <Text style={styles.accessDeniedText}>Access Denied</Text>
+          <Text style={styles.accessDeniedSubtext}>Only admins can create events</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Event title is required';
+    }
+
+    if (!formData.eventDate) {
+      newErrors.eventDate = 'Event date is required';
+    } else {
+      const eventDate = new Date(formData.eventDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (eventDate < today) {
+        newErrors.eventDate = 'Event date cannot be in the past';
+      }
+    }
+
+    if (!formData.startTime) {
+      newErrors.startTime = 'Start time is required';
+    }
+
+    if (!formData.location) {
+      newErrors.location = 'Location is required';
+    }
+
+    if (formData.location === 'Custom Location' && !formData.customLocation.trim()) {
+      newErrors.customLocation = 'Custom location is required';
+    }
+
+    if (formData.endTime && formData.startTime) {
+      const startTime = new Date(`2000-01-01T${formData.startTime}`);
+      const endTime = new Date(`2000-01-01T${formData.endTime}`);
+      if (endTime <= startTime) {
+        newErrors.endTime = 'End time must be after start time';
+      }
+    }
+
+    if (formData.maxAttendees && isNaN(parseInt(formData.maxAttendees))) {
+      newErrors.maxAttendees = 'Max attendees must be a number';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please correct the highlighted fields');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const eventData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        eventDate: formData.eventDate,
+        startTime: formData.startTime,
+        endTime: formData.endTime || null,
+        location: formData.location === 'Custom Location' ? formData.customLocation.trim() : formData.location,
+        address: formData.address.trim(),
+        eventType: formData.eventType,
+        maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : null,
+      };
+
+      console.log('📝 Creating event:', eventData);
+
+      const response = await apiRequest('/events', {
+        method: 'POST',
+        body: JSON.stringify(eventData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.success) {
+        Alert.alert(
+          'Success!',
+          'Event created successfully',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.back()
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', response.error || 'Failed to create event');
+      }
+    } catch (error) {
+      console.error('❌ Error creating event:', error);
+      Alert.alert('Error', 'Network error while creating event');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Create Event</Text>
+          <TouchableOpacity
+            style={[styles.submitButton, loading && styles.disabledButton]}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            <Text style={styles.submitButtonText}>
+              {loading ? 'Creating...' : 'Create'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Basic Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Basic Information</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Event Title *</Text>
+              <TextInput
+                style={[styles.input, errors.title && styles.errorInput]}
+                value={formData.title}
+                onChangeText={(value) => handleInputChange('title', value)}
+                placeholder="Enter event title"
+                editable={!loading}
+              />
+              {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formData.description}
+                onChangeText={(value) => handleInputChange('description', value)}
+                placeholder="Enter event description"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                editable={!loading}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Event Type *</Text>
+              <View style={styles.eventTypeContainer}>
+                {EVENT_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type.key}
+                    style={[
+                      styles.eventTypeButton,
+                      formData.eventType === type.key && styles.selectedEventType
+                    ]}
+                    onPress={() => handleInputChange('eventType', type.key)}
+                    disabled={loading}
+                  >
+                    <Text style={styles.eventTypeIcon}>{type.icon}</Text>
+                    <Text style={[
+                      styles.eventTypeText,
+                      formData.eventType === type.key && styles.selectedEventTypeText
+                    ]}>
+                      {type.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Date and Time */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Date & Time</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Event Date *</Text>
+              <TextInput
+                style={[styles.input, errors.eventDate && styles.errorInput]}
+                value={formData.eventDate}
+                onChangeText={(value) => handleInputChange('eventDate', value)}
+                placeholder="YYYY-MM-DD"
+                editable={!loading}
+              />
+              {errors.eventDate && <Text style={styles.errorText}>{errors.eventDate}</Text>}
+            </View>
+
+            <View style={styles.inputRow}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                <Text style={styles.label}>Start Time *</Text>
+                <TextInput
+                  style={[styles.input, errors.startTime && styles.errorInput]}
+                  value={formData.startTime}
+                  onChangeText={(value) => handleInputChange('startTime', value)}
+                  placeholder="HH:MM (24h)"
+                  editable={!loading}
+                />
+                {errors.startTime && <Text style={styles.errorText}>{errors.startTime}</Text>}
+              </View>
+
+              <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                <Text style={styles.label}>End Time</Text>
+                <TextInput
+                  style={[styles.input, errors.endTime && styles.errorInput]}
+                  value={formData.endTime}
+                  onChangeText={(value) => handleInputChange('endTime', value)}
+                  placeholder="HH:MM (24h)"
+                  editable={!loading}
+                />
+                {errors.endTime && <Text style={styles.errorText}>{errors.endTime}</Text>}
+              </View>
+            </View>
+          </View>
+
+          {/* Location */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Select Location *</Text>
+              <View style={styles.locationContainer}>
+                {LOCATIONS.map((location) => (
+                  <TouchableOpacity
+                    key={location}
+                    style={[
+                      styles.locationButton,
+                      formData.location === location && styles.selectedLocation
+                    ]}
+                    onPress={() => handleInputChange('location', location)}
+                    disabled={loading}
+                  >
+                    <Text style={[
+                      styles.locationText,
+                      formData.location === location && styles.selectedLocationText
+                    ]}>
+                      {location}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
+            </View>
+
+            {formData.location === 'Custom Location' && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Custom Location *</Text>
+                <TextInput
+                  style={[styles.input, errors.customLocation && styles.errorInput]}
+                  value={formData.customLocation}
+                  onChangeText={(value) => handleInputChange('customLocation', value)}
+                  placeholder="Enter custom location"
+                  editable={!loading}
+                />
+                {errors.customLocation && <Text style={styles.errorText}>{errors.customLocation}</Text>}
+              </View>
+            )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Address</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formData.address}
+                onChangeText={(value) => handleInputChange('address', value)}
+                placeholder="Enter full address (optional)"
+                multiline
+                numberOfLines={2}
+                textAlignVertical="top"
+                editable={!loading}
+              />
+            </View>
+          </View>
+
+          {/* Additional Settings */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Additional Settings</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Maximum Attendees</Text>
+              <TextInput
+                style={[styles.input, errors.maxAttendees && styles.errorInput]}
+                value={formData.maxAttendees}
+                onChangeText={(value) => handleInputChange('maxAttendees', value)}
+                placeholder="Leave empty for unlimited"
+                keyboardType="numeric"
+                editable={!loading}
+              />
+              {errors.maxAttendees && <Text style={styles.errorText}>{errors.maxAttendees}</Text>}
+            </View>
+          </View>
+
+          {/* Instructions */}
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>📋 Note:</Text>
+            <Text style={styles.infoText}>
+              • Fields marked with * are required{'\n'}
+              • Event date must be today or in the future{'\n'}
+              • QR code will be auto-generated for attendance{'\n'}
+              • Organizers can scan member QR codes to mark attendance
+            </Text>
+          </View>
+        </ScrollView>
+
+        <StatusBar style="light" />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  header: {
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    minWidth: 60,
+  },
+  backButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+  },
+  title: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.onPrimary,
+    textAlign: 'center',
+    flex: 1,
+  },
+  submitButton: {
+    minWidth: 60,
+    alignItems: 'flex-end',
+  },
+  submitButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.success,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  accessDenied: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  accessDeniedText: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.sm,
+  },
+  accessDeniedSubtext: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xl,
+  },
+  section: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+    marginVertical: Theme.spacing.md,
+  },
+  sectionTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+    borderBottomWidth: 2,
+    borderBottomColor: Theme.colors.primary,
+    paddingBottom: Theme.spacing.sm,
+  },
+  inputGroup: {
+    marginBottom: Theme.spacing.lg,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  label: {
+    ...Theme.typography.body2,
+    fontWeight: '600',
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.xs,
+  },
+  input: {
+    backgroundColor: Theme.colors.surface,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm + 2,
+    borderRadius: Theme.borderRadius.md,
+    fontSize: Theme.typography.body1.fontSize,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    color: Theme.colors.text.primary,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+    paddingTop: Theme.spacing.sm + 2,
+  },
+  errorInput: {
+    borderColor: Theme.colors.error,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.error,
+    marginTop: Theme.spacing.xs,
+  },
+  eventTypeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Theme.spacing.sm,
+  },
+  eventTypeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    backgroundColor: Theme.colors.background,
+    minWidth: 100,
+  },
+  selectedEventType: {
+    borderColor: Theme.colors.primary,
+    backgroundColor: Theme.colors.primary,
+  },
+  eventTypeIcon: {
+    fontSize: 16,
+    marginRight: Theme.spacing.xs,
+  },
+  eventTypeText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+  },
+  selectedEventTypeText: {
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  locationContainer: {
+    gap: Theme.spacing.sm,
+  },
+  locationButton: {
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    backgroundColor: Theme.colors.background,
+  },
+  selectedLocation: {
+    borderColor: Theme.colors.secondary,
+    backgroundColor: Theme.colors.secondary,
+  },
+  locationText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+  },
+  selectedLocationText: {
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  infoCard: {
+    backgroundColor: '#E8F5E8',
+    padding: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    marginVertical: Theme.spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: Theme.colors.success,
+  },
+  infoTitle: {
+    ...Theme.typography.body2,
+    fontWeight: '600',
+    color: Theme.colors.secondary,
+    marginBottom: Theme.spacing.xs,
+  },
+  infoText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.secondary,
+    lineHeight: 16,
+  },
+});
+
+# ==== ./mobile-app/app/event-detail.tsx ====
+
+// mobile-app/app/event-detail.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  RefreshControl,
+  ActivityIndicator,
+  Share,
+  Modal,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+import { apiRequest } from '../utils/apiUtils';
+import QRCode from 'react-native-qrcode-svg';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+      onSecondary: '#ffffff',
+    },
+    border: '#eee',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h1: { fontSize: 32, fontWeight: 'bold' as const },
+    h2: { fontSize: 28, fontWeight: 'bold' as const },
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+  },
+};
+
+interface EventDetail {
+  id: string;
+  title: string;
+  description: string;
+  eventDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  address: string;
+  eventType: string;
+  maxAttendees: number;
+  isActive: boolean;
+  qrCode: string;
+  creator: {
+    id: string;
+    fullName: string;
+    role: string;
+  };
+  attendances: Array<{
+    id: string;
+    user: {
+      fullName: string;
+      membershipId: string;
+      phone: string;
+      role: string;
+    };
+    checkInTime: string;
+    status: string;
+  }>;
+  attendanceCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function EventDetailScreen() {
+  const { user } = useAuth();
+  const { id } = useLocalSearchParams();
+  const [event, setEvent] = useState<EventDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showAttendeesModal, setShowAttendeesModal] = useState(false);
+
+  const isAdmin = () => user?.role === 'admin';
+  const isOrganizer = () => user?.role === 'organizer' || user?.role === 'admin';
+
+  useEffect(() => {
+    if (id) {
+      loadEventDetail();
+    }
+  }, [id]);
+
+  const loadEventDetail = async () => {
+    try {
+      const response = await apiRequest<{ event: EventDetail }>(`/events/${id}`);
+      
+      if (response.success && response.data) {
+        setEvent(response.data.event);
+      } else {
+        Alert.alert('Error', 'Failed to load event details');
+        router.back();
+      }
+    } catch (error) {
+      console.error('❌ Error loading event:', error);
+      Alert.alert('Error', 'Network error while loading event');
+      router.back();
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadEventDetail();
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString: string) => {
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const getEventTypeColor = (eventType: string) => {
+    const colors = {
+      meeting: '#2196F3',
+      rally: '#FF5722',
+      conference: '#9C27B0',
+      community_service: '#4CAF50',
+      training: '#FF9800',
+      other: '#607D8B'
+    };
+    return colors[eventType] || colors.other;
+  };
+
+  const getEventTypeIcon = (eventType: string) => {
+    const icons = {
+      meeting: '🤝',
+      rally: '📢',
+      conference: '🎤',
+      community_service: '🤲',
+      training: '📚',
+      other: '📅'
+    };
+    return icons[eventType] || icons.other;
+  };
+
+  const shareEvent = async () => {
+    if (!event) return;
+
+    try {
+      const eventDate = formatDate(event.eventDate);
+      const startTime = formatTime(event.startTime);
+      
+      const shareContent = {
+        title: event.title,
+        message: `📅 ${event.title}\n\n📍 ${event.location}\n🗓️ ${eventDate}\n🕐 ${startTime}\n\n${event.description || ''}\n\nJoin us at this Gorkha Janshakti Front event!`,
+      };
+
+      await Share.share(shareContent);
+    } catch (error) {
+      console.error('Error sharing event:', error);
+    }
+  };
+
+  const deleteEvent = () => {
+    if (!event) return;
+
+    Alert.alert(
+      'Delete Event',
+      `Are you sure you want to delete "${event.title}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await apiRequest(`/events/${event.id}`, {
+                method: 'DELETE',
+              });
+
+              if (response.success) {
+                Alert.alert('Success', 'Event deleted successfully');
+                router.back();
+              } else {
+                Alert.alert('Error', response.error || 'Failed to delete event');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Network error while deleting event');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const renderAttendeesList = () => (
+    <Modal
+      visible={showAttendeesModal}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <SafeAreaView style={styles.modalContainer}>
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={() => setShowAttendeesModal(false)}>
+            <Text style={styles.modalCloseText}>✕ Close</Text>
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Attendees ({event?.attendanceCount})</Text>
+          <View style={{ width: 60 }} />
+        </View>
+
+        <ScrollView style={styles.attendeesList}>
+          {event?.attendances.map((attendance, index) => (
+            <View key={attendance.id} style={styles.attendeeCard}>
+              <View style={styles.attendeeInfo}>
+                <Text style={styles.attendeeName}>{attendance.user.fullName}</Text>
+                <Text style={styles.attendeeId}>ID: {attendance.user.membershipId}</Text>
+                <Text style={styles.attendeePhone}>{attendance.user.phone}</Text>
+              </View>
+              <View style={styles.attendeeStatus}>
+                <Text style={[
+                  styles.statusBadge,
+                  attendance.status === 'present' ? styles.presentBadge :
+                  attendance.status === 'late' ? styles.lateBadge : styles.earlyBadge
+                ]}>
+                  {attendance.status.toUpperCase()}
+                </Text>
+                <Text style={styles.checkInTime}>
+                  {new Date(attendance.checkInTime).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </Text>
+              </View>
+            </View>
+          ))}
+          
+          {event?.attendances.length === 0 && (
+            <View style={styles.emptyAttendees}>
+              <Text style={styles.emptyAttendeesText}>No attendees yet</Text>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+
+  const renderQRModal = () => (
+    <Modal
+      visible={showQRModal}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <SafeAreaView style={styles.modalContainer}>
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={() => setShowQRModal(false)}>
+            <Text style={styles.modalCloseText}>✕ Close</Text>
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Event QR Code</Text>
+          <TouchableOpacity onPress={shareEvent}>
+            <Text style={styles.modalShareText}>Share</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.qrContainer}>
+          <Text style={styles.qrTitle}>{event?.title}</Text>
+          <Text style={styles.qrSubtitle}>
+            {event && formatDate(event.eventDate)} at {event && formatTime(event.startTime)}
+          </Text>
+          
+          <View style={styles.qrCodeWrapper}>
+            {event?.qrCode ? (
+              <Image source={{ uri: event.qrCode }} style={styles.qrCodeImage} />
+            ) : (
+              <View style={styles.qrPlaceholder}>
+                <Text style={styles.qrPlaceholderText}>QR Code</Text>
+              </View>
+            )}
+          </View>
+          
+          <Text style={styles.qrInstructions}>
+            Organizers can use this QR code or scan member QR codes to mark attendance
+          </Text>
+        </View>
+      </SafeAreaView>
+    </Modal>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Loading...</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!event) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Event Not Found</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const isUpcoming = new Date(event.eventDate) > new Date();
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title} numberOfLines={1}>Event Details</Text>
+        <View style={styles.headerActions}>
+          {isAdmin() && (
+            <TouchableOpacity onPress={deleteEvent} style={styles.deleteButton}>
+              <Text style={styles.deleteButtonText}>🗑️</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={shareEvent} style={styles.shareButton}>
+            <Text style={styles.shareButtonText}>📤</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Theme.colors.primary]}
+          />
+        }
+      >
+        {/* Event Header */}
+        <View style={styles.eventHeader}>
+          <View style={styles.eventTypeContainer}>
+            <Text style={styles.eventTypeIcon}>{getEventTypeIcon(event.eventType)}</Text>
+            <Text style={[
+              styles.eventType,
+              { backgroundColor: getEventTypeColor(event.eventType) }
+            ]}>
+              {event.eventType.replace('_', ' ').toUpperCase()}
+            </Text>
+          </View>
+          <Text style={[
+            styles.eventStatus,
+            { color: isUpcoming ? Theme.colors.success : Theme.colors.secondary }
+          ]}>
+            {isUpcoming ? 'UPCOMING' : 'COMPLETED'}
+          </Text>
+        </View>
+
+        <Text style={styles.eventTitle}>{event.title}</Text>
+
+        {/* Event Details */}
+        <View style={styles.eventDetailsCard}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📅</Text>
+            <Text style={styles.detailLabel}>Date:</Text>
+            <Text style={styles.detailValue}>{formatDate(event.eventDate)}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>🕐</Text>
+            <Text style={styles.detailLabel}>Time:</Text>
+            <Text style={styles.detailValue}>
+              {formatTime(event.startTime)}
+              {event.endTime && ` - ${formatTime(event.endTime)}`}
+            </Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailLabel}>Location:</Text>
+            <Text style={styles.detailValue}>{event.location}</Text>
+          </View>
+
+          {event.address && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailIcon}>🏠</Text>
+              <Text style={styles.detailLabel}>Address:</Text>
+              <Text style={styles.detailValue}>{event.address}</Text>
+            </View>
+          )}
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>👥</Text>
+            <Text style={styles.detailLabel}>Attendees:</Text>
+            <TouchableOpacity onPress={() => setShowAttendeesModal(true)}>
+              <Text style={[styles.detailValue, styles.attendeesLink]}>
+                {event.attendanceCount} registered
+                {event.maxAttendees && ` / ${event.maxAttendees} max`}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Description */}
+        {event.description && (
+          <View style={styles.descriptionCard}>
+            <Text style={styles.descriptionTitle}>Description</Text>
+            <Text style={styles.descriptionText}>{event.description}</Text>
+          </View>
+        )}
+
+        {/* Actions */}
+        <View style={styles.actionsCard}>
+          <TouchableOpacity
+            style={styles.qrButton}
+            onPress={() => setShowQRModal(true)}
+          >
+            <Text style={styles.qrButtonIcon}>📱</Text>
+            <Text style={styles.qrButtonText}>View QR Code</Text>
+          </TouchableOpacity>
+
+          {isOrganizer() && (
+            <TouchableOpacity
+              style={styles.scanButton}
+              onPress={() => router.push('/attendance-scanner')}
+            >
+              <Text style={styles.scanButtonIcon}>📷</Text>
+              <Text style={styles.scanButtonText}>Mark Attendance</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Creator Info */}
+        <View style={styles.creatorCard}>
+          <Text style={styles.creatorTitle}>Event Created By</Text>
+          <Text style={styles.creatorName}>{event.creator.fullName}</Text>
+          <Text style={styles.creatorRole}>({event.creator.role})</Text>
+          <Text style={styles.createdDate}>
+            Created: {new Date(event.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+      </ScrollView>
+
+      {/* Modals */}
+      {renderQRModal()}
+      {renderAttendeesList()}
+
+      <StatusBar style="light" />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  header: {
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+  },
+  title: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.onPrimary,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: Theme.spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: Theme.spacing.sm,
+  },
+  deleteButton: {
+    padding: Theme.spacing.xs,
+  },
+  deleteButtonText: {
+    fontSize: 18,
+  },
+  shareButton: {
+    padding: Theme.spacing.xs,
+  },
+  shareButtonText: {
+    fontSize: 18,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.lg,
+  },
+  eventTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eventTypeIcon: {
+    fontSize: 18,
+    marginRight: Theme.spacing.xs,
+  },
+  eventType: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onPrimary,
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.sm,
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  eventStatus: {
+    ...Theme.typography.caption,
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  eventTitle: {
+    ...Theme.typography.h2,
+    color: Theme.colors.text.primary,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.md,
+  },
+  eventDetailsCard: {
+    backgroundColor: Theme.colors.surface,
+    margin: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: Theme.spacing.md,
+  },
+  detailIcon: {
+    fontSize: 16,
+    width: 25,
+    marginRight: Theme.spacing.sm,
+  },
+  detailLabel: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+    width: 80,
+  },
+  detailValue: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    flex: 1,
+  },
+  attendeesLink: {
+    color: Theme.colors.primary,
+    textDecorationLine: 'underline',
+  },
+  descriptionCard: {
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.lg,
+    marginBottom: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+  },
+  descriptionTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  descriptionText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    lineHeight: 24,
+  },
+  actionsCard: {
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.lg,
+    marginBottom: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+    flexDirection: 'row',
+    gap: Theme.spacing.md,
+  },
+  qrButton: {
+    flex: 1,
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  qrButtonIcon: {
+    fontSize: 20,
+    marginRight: Theme.spacing.xs,
+  },
+  qrButtonText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  scanButton: {
+    flex: 1,
+    backgroundColor: Theme.colors.secondary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  scanButtonIcon: {
+    fontSize: 20,
+    marginRight: Theme.spacing.xs,
+  },
+  scanButtonText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  creatorCard: {
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.lg,
+    marginBottom: Theme.spacing.xl,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+    alignItems: 'center',
+  },
+  creatorTitle: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    marginBottom: Theme.spacing.sm,
+  },
+  creatorName: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.xs,
+  },
+  creatorRole: {
+    ...Theme.typography.body2,
+    color: Theme.colors.secondary,
+    fontWeight: '600',
+    marginBottom: Theme.spacing.sm,
+  },
+  createdDate: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  modalHeader: {
+    backgroundColor: Theme.colors.surface,
+    paddingVertical: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  modalCloseText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+  modalTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+  },
+  modalShareText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  qrContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Theme.spacing.lg,
+  },
+  qrTitle: {
+    ...Theme.typography.h3,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.sm,
+  },
+  qrSubtitle: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.xl,
+  },
+  qrCodeWrapper: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+  },
+  qrPlaceholder: {
+    width: 200,
+    height: 200,
+    backgroundColor: Theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: Theme.borderRadius.md,
+  },
+  qrPlaceholderText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+  qrInstructions: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    maxWidth: 280,
+    lineHeight: 20,
+  },
+  attendeesList: {
+    flex: 1,
+    padding: Theme.spacing.lg,
+  },
+  attendeeCard: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  attendeeInfo: {
+    flex: 1,
+  },
+  attendeeName: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.primary,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  attendeeId: {
+    ...Theme.typography.body2,
+    color: Theme.colors.primary,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  attendeePhone: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+  },
+  attendeeStatus: {
+    alignItems: 'flex-end',
+  },
+  statusBadge: {
+    ...Theme.typography.caption,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  presentBadge: {
+    backgroundColor: '#E8F5E8',
+    color: Theme.colors.success,
+  },
+  lateBadge: {
+    backgroundColor: '#FFF3E0',
+    color: Theme.colors.warning,
+  },
+  earlyBadge: {
+    backgroundColor: '#E3F2FD',
+    color: '#2196F3',
+  },
+  checkInTime: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  emptyAttendees: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.xl,
+  },
+  emptyAttendeesText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+});
+
+# ==== ./mobile-app/app/attendance-scanner.tsx ====
+
+// mobile-app/app/attendance-scanner.tsx
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+  ScrollView,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CameraView, Camera } from "expo-camera";
+import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+import { apiRequest } from '../utils/apiUtils';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+    },
+    border: '#eee',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    md: 8,
+    lg: 12,
+  },
+};
+
+interface AttendanceRecord {
+  id: string;
+  user: {
+    fullName: string;
+    membershipId: string;
+    phone: string;
+    email: string;
+    role: string;
+  };
+  event?: {
+    title: string;
+    eventDate: string;
+  };
+  location: string;
+  attendanceType: string;
+  checkInTime: string;
+  status: string;
+}
+
+const LOCATIONS = [
+  'Central Party Office',
+  'Party Office Darjeeling',
+  'Party Office Kalimpong',
+  'Party Office Kurseong',
+];
+
+export default function AttendanceScannerScreen() {
+  const { user } = useAuth();
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [attendanceRecord, setAttendanceRecord] = useState<AttendanceRecord | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [scanType, setScanType] = useState<'event' | 'location'>('event');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const camera = useRef(null);
+
+  // Check permissions and role
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  // Check if user can mark attendance
+  const canMarkAttendance = () => {
+    return user?.role === 'admin' || user?.role === 'organizer';
+  };
+
+  const handleBarCodeScanned = async ({ type, data }) => {
+    if (scanned || loading) return;
+    
+    setScanned(true);
+    setLoading(true);
+    
+    try {
+      console.log('📱 QR Code scanned:', data);
+      
+      let attendanceData;
+      
+      if (scanType === 'location') {
+        if (!selectedLocation) {
+          Alert.alert('Error', 'Please select a location first', [
+            { text: 'OK', onPress: resetScanner }
+          ]);
+          return;
+        }
+        
+        attendanceData = {
+          qrData: data,
+          location: selectedLocation,
+          attendanceType: 'location_visit',
+          notes: `Location visit at ${selectedLocation}`
+        };
+      } else {
+        // For event attendance, the QR data should contain event info
+        attendanceData = {
+          qrData: data,
+          attendanceType: 'event'
+        };
+      }
+
+      const response = await apiRequest<{ attendance: AttendanceRecord }>('/events/attendance/mark', {
+        method: 'POST',
+        body: JSON.stringify(attendanceData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.success && response.data) {
+        setAttendanceRecord(response.data.attendance);
+        setModalVisible(true);
+      } else {
+        Alert.alert(
+          'Attendance Error',
+          response.error || 'Failed to mark attendance',
+          [{ text: 'Try Again', onPress: resetScanner }]
+        );
+      }
+    } catch (error) {
+      console.error('❌ Attendance error:', error);
+      Alert.alert(
+        'Scan Error',
+        'Network error while marking attendance',
+        [{ text: 'Try Again', onPress: resetScanner }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetScanner = () => {
+    setScanned(false);
+    setAttendanceRecord(null);
+    setModalVisible(false);
+    setLoading(false);
+  };
+
+  const confirmAttendance = () => {
+    setModalVisible(false);
+    Alert.alert(
+      'Attendance Marked!',
+      `${attendanceRecord?.user.fullName} has been marked present.`,
+      [
+        {
+          text: 'Scan Another',
+          onPress: resetScanner
+        },
+        {
+          text: 'Done',
+          onPress: () => router.back()
+        }
+      ]
+    );
+  };
+
+  // Access control
+  if (!canMarkAttendance()) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Attendance Scanner</Text>
+        </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.message}>Access Denied</Text>
+          <Text style={styles.subMessage}>Only admins and organizers can mark attendance</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Camera permission check
+  if (hasPermission === null) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.messageContainer}>
+          <ActivityIndicator size="large" color={Theme.colors.primary} />
+          <Text style={styles.message}>Requesting camera permission...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasPermission === false) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.messageContainer}>
+          <Text style={styles.message}>Camera permission denied</Text>
+          <Text style={styles.subMessage}>Please enable camera access to scan QR codes</Text>
+          <TouchableOpacity style={styles.button} onPress={() => router.back()}>
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show location selector if location scan type is selected but no location chosen
+  if (scanType === 'location' && !selectedLocation) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Select Location</Text>
+        </View>
+        
+        <View style={styles.locationSelectorContainer}>
+          <Text style={styles.locationSelectorTitle}>
+            Choose location for attendance marking:
+          </Text>
+          
+          {LOCATIONS.map((location) => (
+            <TouchableOpacity
+              key={location}
+              style={styles.locationOption}
+              onPress={() => setSelectedLocation(location)}
+            >
+              <Text style={styles.locationOptionText}>{location}</Text>
+              <Text style={styles.locationOptionArrow}>→</Text>
+            </TouchableOpacity>
+          ))}
+          
+          <TouchableOpacity
+            style={styles.switchScanTypeButton}
+            onPress={() => setScanType('event')}
+          >
+            <Text style={styles.switchScanTypeText}>
+              Switch to Event Attendance
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header Overlay */}
+      <View style={styles.headerOverlay}>
+        <SafeAreaView>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>
+              {scanType === 'event' ? 'Event Attendance' : `${selectedLocation}`}
+            </Text>
+          </View>
+        </SafeAreaView>
+      </View>
+
+      {/* Camera */}
+      <CameraView
+        style={styles.camera}
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr", "pdf417"],
+        }}
+      >
+        {/* Scan Type Switcher */}
+        <View style={styles.scanTypeSwitcher}>
+          <TouchableOpacity
+            style={[
+              styles.scanTypeButton,
+              scanType === 'event' && styles.activeScanType
+            ]}
+            onPress={() => setScanType('event')}
+          >
+            <Text style={[
+              styles.scanTypeText,
+              scanType === 'event' && styles.activeScanTypeText
+            ]}>
+              📅 Event
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.scanTypeButton,
+              scanType === 'location' && styles.activeScanType
+            ]}
+            onPress={() => {
+              setScanType('location');
+              setSelectedLocation('');
+            }}
+          >
+            <Text style={[
+              styles.scanTypeText,
+              scanType === 'location' && styles.activeScanTypeText
+            ]}>
+              📍 Location
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Scan Frame */}
+        <View style={styles.overlay}>
+          <View style={styles.scanFrame} />
+          <Text style={styles.scanText}>
+            {scanType === 'event' 
+              ? 'Scan member QR code for event attendance' 
+              : `Scan member QR code for ${selectedLocation} visit`
+            }
+          </Text>
+        </View>
+      </CameraView>
+
+      {/* Loading Overlay */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={Theme.colors.success} />
+          <Text style={styles.loadingText}>Marking attendance...</Text>
+        </View>
+      )}
+
+      {/* Attendance Confirmation Modal */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Attendance Marked!</Text>
+          </View>
+
+          {attendanceRecord && (
+            <ScrollView style={styles.modalContent}>
+              <View style={styles.successIcon}>
+                <Text style={styles.successIconText}>✅</Text>
+              </View>
+
+              <View style={styles.memberInfo}>
+                <Text style={styles.memberName}>{attendanceRecord.user.fullName}</Text>
+                <Text style={styles.membershipId}>ID: {attendanceRecord.user.membershipId}</Text>
+                <Text style={styles.memberDetails}>{attendanceRecord.user.phone}</Text>
+                <Text style={styles.memberDetails}>{attendanceRecord.user.email}</Text>
+              </View>
+
+              <View style={styles.attendanceDetails}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Type:</Text>
+                  <Text style={styles.detailValue}>
+                    {attendanceRecord.attendanceType === 'event' ? 'Event Attendance' : 'Location Visit'}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Location:</Text>
+                  <Text style={styles.detailValue}>{attendanceRecord.location}</Text>
+                </View>
+
+                {attendanceRecord.event && (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Event:</Text>
+                    <Text style={styles.detailValue}>{attendanceRecord.event.title}</Text>
+                  </View>
+                )}
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Time:</Text>
+                  <Text style={styles.detailValue}>
+                    {new Date(attendanceRecord.checkInTime).toLocaleString()}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Status:</Text>
+                  <Text style={[
+                    styles.detailValue,
+                    styles.statusText,
+                    attendanceRecord.status === 'present' ? styles.presentStatus :
+                    attendanceRecord.status === 'late' ? styles.lateStatus : 
+                    styles.earlyStatus
+                  ]}>
+                    {attendanceRecord.status.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.scanAnotherButton}
+                  onPress={resetScanner}
+                >
+                  <Text style={styles.scanAnotherButtonText}>Scan Another</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => router.back()}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      <StatusBar style="light" />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: 'rgba(27, 41, 81, 0.9)',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  title: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  camera: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  scanTypeSwitcher: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: Theme.borderRadius.lg,
+    padding: 4,
+  },
+  scanTypeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  activeScanType: {
+    backgroundColor: Theme.colors.secondary,
+  },
+  scanTypeText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  activeScanTypeText: {
+    fontWeight: 'bold',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  scanFrame: {
+    width: 250,
+    height: 250,
+    borderWidth: 3,
+    borderColor: Theme.colors.secondary,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+  },
+  scanText: {
+    color: 'white',
+    fontSize: 16,
+    marginTop: 30,
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    maxWidth: 280,
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: Theme.colors.background,
+  },
+  message: {
+    ...Theme.typography.h3,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subMessage: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  button: {
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: Theme.borderRadius.md,
+  },
+  buttonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 16,
+    marginTop: 15,
+  },
+  locationSelectorContainer: {
+    flex: 1,
+    padding: Theme.spacing.lg,
+  },
+  locationSelectorTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.xl,
+  },
+  locationOption: {
+    backgroundColor: Theme.colors.surface,
+    paddingVertical: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  locationOptionText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.primary,
+    fontWeight: '500',
+  },
+  locationOptionArrow: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+  switchScanTypeButton: {
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    marginTop: Theme.spacing.xl,
+    alignItems: 'center',
+  },
+  switchScanTypeText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  modalHeader: {
+    backgroundColor: Theme.colors.surface,
+    paddingVertical: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.lg,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  modalTitle: {
+    ...Theme.typography.h3,
+    color: Theme.colors.text.primary,
+  },
+  modalContent: {
+    flex: 1,
+    padding: Theme.spacing.lg,
+  },
+  successIcon: {
+    alignItems: 'center',
+    marginBottom: Theme.spacing.lg,
+  },
+  successIconText: {
+    fontSize: 64,
+  },
+  memberInfo: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    alignItems: 'center',
+    marginBottom: Theme.spacing.lg,
+  },
+  memberName: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.xs,
+  },
+  membershipId: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '600',
+    marginBottom: Theme.spacing.sm,
+  },
+  memberDetails: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    marginBottom: 2,
+  },
+  attendanceDetails: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.lg,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  detailLabel: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+  detailValue: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
+  },
+  statusText: {
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  presentStatus: {
+    backgroundColor: '#E8F5E8',
+    color: Theme.colors.success,
+  },
+  lateStatus: {
+    backgroundColor: '#FFF3E0',
+    color: Theme.colors.warning,
+  },
+  earlyStatus: {
+    backgroundColor: '#E3F2FD',
+    color: '#2196F3',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: Theme.spacing.md,
+  },
+  scanAnotherButton: {
+    flex: 1,
+    backgroundColor: Theme.colors.secondary,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  scanAnotherButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  doneButton: {
+    flex: 1,
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+});
 
 # ==== ./mobile-app/app/admin.tsx ====
 
@@ -7054,30 +9369,34 @@ export const memberAPI = {
 
 # ==== ./backend/server.js ====
 
-// backend/server.js - COMPLETE FIXED VERSION
+// backend/server.js - FIXED VERSION
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
 const { sequelize } = require('./config/database');
+
+// Import models to ensure associations are loaded
+require('./models/index');
+
 const authRoutes = require('./routes/auth');
 const memberRoutes = require('./routes/members');
+const eventRoutes = require('./routes/events');
 
-const app = express();
+const app = express(); // ← This line must come BEFORE any app.use() calls
 const PORT = process.env.PORT || 5000;
 
 console.log('🚀 Starting server...');
 
-// CORS configuration - CRITICAL FOR MOBILE APP
+// CORS configuration
 app.use(cors({
-  origin: '*', // Allow all origins for development
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: false
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
 // Body parsing middleware
@@ -7090,7 +9409,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files (profile photos)
+// Debug middleware for attendance requests (MOVED AFTER app creation)
+app.use('/api/events/attendance', (req, res, next) => {
+  console.log('🔍 Attendance API called:', {
+    method: req.method,
+    url: req.url,
+    body: req.body,
+    headers: {
+      authorization: req.headers.authorization ? 'Bearer ***' : 'No auth',
+      contentType: req.headers['content-type']
+    }
+  });
+  next();
+});
+
+// Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
@@ -7099,7 +9432,7 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     message: 'Server is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.1.0'
   });
 });
 
@@ -7111,7 +9444,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       auth: '/api/auth',
-      members: '/api/members'
+      members: '/api/members',
+      events: '/api/events'
     }
   });
 });
@@ -7119,8 +9453,19 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
+app.use('/api/events', eventRoutes);
 
-// Error handling middleware
+// Error handling middleware for attendance route
+app.use('/api/events/attendance', (err, req, res, next) => {
+  console.error('❌ Attendance API Error:', err);
+  res.status(500).json({ 
+    success: false, 
+    message: 'Attendance API error', 
+    error: err.message 
+  });
+});
+
+// General error handling middleware
 app.use((err, req, res, next) => {
   console.error('❌ Server error:', err);
   res.status(500).json({ 
@@ -7146,18 +9491,19 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connected successfully');
 
-    console.log('🔄 Syncing database...');
+    console.log('📄 Syncing database...');
     await sequelize.sync({ alter: true });
     console.log('✅ Database synced');
 
     // Start listening
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log('🎉 Server started successfully!');
-      console.log('📍 Server running on:');
+      console.log('🔗 Server running on:');
       console.log(`   - Local: http://localhost:${PORT}`);
       console.log(`   - Network: http://192.168.1.65:${PORT}`);
       console.log('📱 API Base URL: http://192.168.1.65:5000/api');
-      console.log('🔍 Health Check: http://192.168.1.65:5000/health');
+      console.log('🏥 Health Check: http://192.168.1.65:5000/health');
+      console.log('📅 Events API: http://192.168.1.65:5000/api/events');
       console.log('='.repeat(50));
     });
 
@@ -7176,69 +9522,6 @@ const startServer = async () => {
 };
 
 startServer();
-
-# ==== ./backend/test-server-with-db.js ====
-
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
-
-console.log('🔌 Testing database connection...');
-const { sequelize } = require('./config/database');
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-console.log('🚀 Starting test server with database...');
-
-// Middleware
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: false
-}));
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Test server with DB is running',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Load routes
-const authRoutes = require('./routes/auth');
-const memberRoutes = require('./routes/members');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/members', memberRoutes);
-
-// Start server with database
-const startServer = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Database connected successfully');
-
-    await sequelize.sync({ alter: true });
-    console.log('✅ Database synced');
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log('✅ Test server with DB started successfully on port', PORT);
-    });
-  } catch (error) {
-    console.error('❌ Server startup error:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
-
 
 # ==== ./backend/package.json ====
 
@@ -7285,6 +9568,47 @@ startServer();
 }
 
 
+# ==== ./backend/debug-events.js ====
+
+// Create this file: backend/debug-events.js
+const { sequelize } = require('./config/database');
+const Event = require('./models/Event');
+const User = require('./models/User');
+
+async function checkEvents() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connected');
+
+    // Get all events with raw SQL
+    const [results] = await sequelize.query('SELECT * FROM events');
+    console.log('🔍 Raw events from database:', results);
+
+    // Get events using model
+    const events = await Event.findAll();
+    console.log('📅 Events via model:', events.length);
+    
+    if (events.length > 0) {
+      console.log('Event details:', events[0].toJSON());
+    }
+
+    // Check users
+    const users = await User.findAll();
+    console.log('👥 Users count:', users.length);
+    
+    if (users.length > 0) {
+      console.log('First user:', users[0].fullName, users[0].role);
+    }
+
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error:', error);
+    process.exit(1);
+  }
+}
+
+checkEvents();
+
 # ==== ./backend/debug-server.js ====
 
 // backend/debug-server.js - Temporary file to isolate the issue
@@ -7328,55 +9652,6 @@ try {
 
 app.listen(PORT, () => {
   console.log(`🎉 Debug server running on port ${PORT}`);
-});
-
-
-# ==== ./backend/test-server.js ====
-
-// backend/test-server.js - Minimal version of your main server
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-console.log('🚀 Starting test server...');
-
-// Basic middleware (same as debug server)
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: false
-}));
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Test server is running',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Try loading routes
-console.log('Loading auth routes...');
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
-
-console.log('Loading member routes...');
-const memberRoutes = require('./routes/members');
-app.use('/api/members', memberRoutes);
-
-console.log('All routes loaded, starting server...');
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('✅ Test server started successfully on port', PORT);
 });
 
 
@@ -7459,6 +9734,148 @@ const connectDB = async () => {
 };
 
 module.exports = { sequelize, connectDB };
+
+# ==== ./backend/models/Attendance.js ====
+
+// Create this file: backend/models/Attendance.js
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
+
+const Attendance = sequelize.define('Attendance', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  eventId: {
+    type: DataTypes.UUID,
+    allowNull: true, // Can be null for location-only attendance
+    references: {
+      model: 'events',
+      key: 'id',
+    },
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: false, // Required field
+  },
+  attendanceType: {
+    type: DataTypes.ENUM('event', 'location_visit'),
+    allowNull: false,
+  },
+  checkInTime: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  checkOutTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  markedBy: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  status: {
+    type: DataTypes.ENUM('present', 'late', 'early_departure'),
+    defaultValue: 'present',
+  },
+}, {
+  tableName: 'attendances',
+  timestamps: true,
+});
+
+module.exports = Attendance;
+
+# ==== ./backend/models/Event.js ====
+
+// backend/models/Event.js
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
+
+const Event = sequelize.define('Event', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  eventDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  startTime: {
+    type: DataTypes.TIME,
+    allowNull: false,
+  },
+  endTime: {
+    type: DataTypes.TIME,
+    allowNull: true,
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  eventType: {
+    type: DataTypes.ENUM('meeting', 'rally', 'conference', 'community_service', 'training', 'other'),
+    defaultValue: 'meeting',
+  },
+  maxAttendees: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  createdBy: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  qrCode: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  qrCodeData: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+}, {
+  tableName: 'events',
+  timestamps: true,
+});
+
+module.exports = Event;
 
 # ==== ./backend/models/User.js ====
 
@@ -7649,314 +10066,406 @@ User.prototype.getPublicProfile = function() {
 
 module.exports = User;
 
-# ==== ./backend/scripts/createAdmin.js ====
+# ==== ./backend/models/index.js ====
 
-const { sequelize } = require('../config/database');
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+// backend/models/index.js - UPDATED with Attendance
+const User = require('./User');
+const Event = require('./Event');
+const Attendance = require('./Attendance');
+
+// Define associations
+User.hasMany(Event, { 
+  foreignKey: 'createdBy', 
+  as: 'createdEvents' 
+});
+
+Event.belongsTo(User, { 
+  foreignKey: 'createdBy', 
+  as: 'creator' 
+});
+
+User.hasMany(Attendance, { 
+  foreignKey: 'userId', 
+  as: 'attendances' 
+});
+
+User.hasMany(Attendance, { 
+  foreignKey: 'markedBy', 
+  as: 'markedAttendances' 
+});
+
+Event.hasMany(Attendance, { 
+  foreignKey: 'eventId', 
+  as: 'attendances' 
+});
+
+Attendance.belongsTo(User, { 
+  foreignKey: 'userId', 
+  as: 'user' 
+});
+
+Attendance.belongsTo(User, { 
+  foreignKey: 'markedBy', 
+  as: 'marker' 
+});
+
+Attendance.belongsTo(Event, { 
+  foreignKey: 'eventId', 
+  as: 'event' 
+});
+
+module.exports = {
+  User,
+  Event,
+  Attendance
+};
+
+# ==== ./backend/controllers/eventController.js ====
+
+// backend/controllers/eventController.js - FIXED VERSION
 const QRCode = require('qrcode');
-const { v4: uuidv4 } = require('uuid');
+const { Op } = require('sequelize');
+const Event = require('../models/Event');
+const Attendance = require('../models/Attendance');
+const User = require('../models/User');
 
-const createAdminUser = async () => {
+// Create event (Admin only)
+const createEvent = async (req, res) => {
   try {
-    // Connect to database
-    await sequelize.authenticate();
-    await sequelize.sync();
+    const {
+      title,
+      description,
+      eventDate,
+      startTime,
+      endTime,
+      location,
+      address,
+      eventType,
+      maxAttendees
+    } = req.body;
 
-    // Check if admin already exists
-    const adminExists = await User.findOne({ where: { role: 'admin' } });
-    if (adminExists) {
-      console.log('Admin user already exists:');
-      console.log('Email:', adminExists.email);
-      console.log('You can use this account to login');
-      
-      return;
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash('pass1', 12);
-    
-    // Generate membership ID
-    const membershipId = 'GJMF-ADMIN-2026';
-    
-    // Create QR code data
-    const qrData = {
-      membershipId,
-      name: 'System Administrator',
-      phone: '+91-9999999999',
-      id: uuidv4()
-    };
-    
-    // Generate QR code
-    const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
-
-    // Create admin user
-    const adminUser = await User.create({
-      membershipId,
-      fullName: 'System Administrator',
-      fatherName: 'System',
-      address: 'Party Headquarters',
-      phone: '+91-9999999999',
-      email: 'admin@gmail.com',
-      dateOfBirth: new Date('1990-01-01'),
-      occupation: 'Administrator',
-      constituency: 'Central Office',
-      password: hashedPassword,
-      role: 'admin',
-      qrCode,
-      qrCodeData: JSON.stringify(qrData),
-      isVerified: true
+    // DEBUG LOG
+    console.log('🔍 Creating event with data:', {
+      title,
+      eventDate,
+      startTime,
+      location,
+      createdBy: req.user?.id,
+      userRole: req.user?.role
     });
 
-    console.log('✅ Admin user created successfully!');
-    console.log('📧 Email: admin@gmail.com');
-    console.log('🔑 Password: pass1');
-    console.log('🆔 Membership ID:', adminUser.membershipId);
-    console.log('\nYou can now login with these credentials.');
-    
-    process.exit(0);
+    // Validate required fields
+    if (!title || !eventDate || !startTime || !location) {
+      console.log('❌ Validation failed - missing required fields');
+      return res.status(400).json({ 
+        message: 'Title, event date, start time, and location are required' 
+      });
+    }
+
+    // Generate QR code data for event
+    const qrCodeData = JSON.stringify({
+      type: 'event',
+      eventId: null, // Will be updated after creation
+      title,
+      eventDate,
+      location,
+      timestamp: Date.now()
+    });
+
+    console.log('📝 About to create event in database...');
+
+    // Create event
+    const event = await Event.create({
+      title,
+      description,
+      eventDate,
+      startTime,
+      endTime,
+      location,
+      address,
+      eventType: eventType || 'meeting',
+      maxAttendees,
+      createdBy: req.user.id,
+      qrCodeData
+    });
+
+    console.log('✅ Event created with ID:', event.id);
+
+    // Update QR code data with actual event ID
+    const updatedQrCodeData = JSON.stringify({
+      type: 'event',
+      eventId: event.id,
+      title,
+      eventDate,
+      location,
+      timestamp: Date.now()
+    });
+
+    // Generate QR code
+    const qrCodeUrl = await QRCode.toDataURL(updatedQrCodeData);
+
+    // Update event with QR code
+    await event.update({
+      qrCode: qrCodeUrl,
+      qrCodeData: updatedQrCodeData
+    });
+
+    console.log('✅ Event updated with QR code');
+
+    res.status(201).json({
+      success: true,
+      message: 'Event created successfully',
+      event: {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        eventDate: event.eventDate,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        location: event.location,
+        address: event.address,
+        eventType: event.eventType,
+        maxAttendees: event.maxAttendees,
+        isActive: event.isActive,
+        qrCode: event.qrCode,
+        createdBy: event.createdBy,
+        createdAt: event.createdAt
+      }
+    });
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
-    process.exit(1);
+    console.error('❌ Error creating event:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
-createAdminUser();
-
-# ==== ./backend/scripts/addAadharFieldsToExisting.js ====
-
-const { sequelize } = require('../config/database');
-
-async function addAadharFieldsToExisting() {
+// Get all events
+const getAllEvents = async (req, res) => {
   try {
-    console.log('🔄 Adding Aadhar fields to existing users table...');
-
-    const queryInterface = sequelize.getQueryInterface();
-
-    // Check if columns already exist before adding
-    const tableDescription = await queryInterface.describeTable('users');
+    const { active, upcoming, past } = req.query;
     
-    // Add aadharNumber if it doesn't exist
-    if (!tableDescription.aadharNumber) {
-      await queryInterface.addColumn('users', 'aadharNumber', {
-        type: sequelize.Sequelize.STRING(12),
-        allowNull: true,
-        unique: true
-      });
-      console.log('✅ Added aadharNumber column');
-    } else {
-      console.log('ℹ️ aadharNumber column already exists');
+    let whereCondition = {};
+    
+    if (active === 'true') {
+      whereCondition.isActive = true;
+    }
+    
+    if (upcoming === 'true') {
+      whereCondition.eventDate = {
+        [Op.gte]: new Date()
+      };
+    }
+    
+    if (past === 'true') {
+      whereCondition.eventDate = {
+        [Op.lt]: new Date()
+      };
     }
 
-    // Add aadharVerified if it doesn't exist
-    if (!tableDescription.aadharVerified) {
-      await queryInterface.addColumn('users', 'aadharVerified', {
-        type: sequelize.Sequelize.BOOLEAN,
-        defaultValue: false
-      });
-      console.log('✅ Added aadharVerified column');
-    } else {
-      console.log('ℹ️ aadharVerified column already exists');
-    }
-
-    // Add aadharVerificationDate if it doesn't exist
-    if (!tableDescription.aadharVerificationDate) {
-      await queryInterface.addColumn('users', 'aadharVerificationDate', {
-        type: sequelize.Sequelize.DATE,
-        allowNull: true
-      });
-      console.log('✅ Added aadharVerificationDate column');
-    } else {
-      console.log('ℹ️ aadharVerificationDate column already exists');
-    }
-
-    // Add gender if it doesn't exist
-    if (!tableDescription.gender) {
-      await queryInterface.addColumn('users', 'gender', {
-        type: sequelize.Sequelize.STRING,
-        allowNull: true
-      });
-      console.log('✅ Added gender column');
-    } else {
-      console.log('ℹ️ gender column already exists');
-    }
-
-    // Add city if it doesn't exist
-    if (!tableDescription.city) {
-      await queryInterface.addColumn('users', 'city', {
-        type: sequelize.Sequelize.STRING,
-        allowNull: true
-      });
-      console.log('✅ Added city column');
-    } else {
-      console.log('ℹ️ city column already exists');
-    }
-
-    // Add state if it doesn't exist
-    if (!tableDescription.state) {
-      await queryInterface.addColumn('users', 'state', {
-        type: sequelize.Sequelize.STRING,
-        allowNull: true
-      });
-      console.log('✅ Added state column');
-    } else {
-      console.log('ℹ️ state column already exists');
-    }
-
-    // Add pincode if it doesn't exist
-    if (!tableDescription.pincode) {
-      await queryInterface.addColumn('users', 'pincode', {
-        type: sequelize.Sequelize.STRING,
-        allowNull: true
-      });
-      console.log('✅ Added pincode column');
-    } else {
-      console.log('ℹ️ pincode column already exists');
-    }
-
-    // Add isActive if it doesn't exist
-    if (!tableDescription.isActive) {
-      await queryInterface.addColumn('users', 'isActive', {
-        type: sequelize.Sequelize.BOOLEAN,
-        defaultValue: true
-      });
-      console.log('✅ Added isActive column');
-    } else {
-      console.log('ℹ️ isActive column already exists');
-    }
-
-    console.log('🎉 Migration completed successfully!');
-
-  } catch (error) {
-    console.error('❌ Migration failed:', error);
-    throw error;
-  }
-}
-
-// Run migration if called directly
-if (require.main === module) {
-  addAadharFieldsToExisting()
-    .then(() => {
-      console.log('✅ All Aadhar fields added successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('💥 Migration failed:', error);
-      process.exit(1);
+    const events = await Event.findAll({
+      where: whereCondition,
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'fullName', 'role']
+        },
+        {
+          model: Attendance,
+          as: 'attendances',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'fullName', 'membershipId']
+            }
+          ]
+        }
+      ],
+      order: [['eventDate', 'ASC']]
     });
-}
 
-module.exports = addAadharFieldsToExisting;
+    const formattedEvents = events.map(event => ({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      eventDate: event.eventDate,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      location: event.location,
+      address: event.address,
+      eventType: event.eventType,
+      maxAttendees: event.maxAttendees,
+      isActive: event.isActive,
+      qrCode: event.qrCode,
+      createdBy: event.createdBy,
+      creator: event.creator,
+      attendanceCount: event.attendances ? event.attendances.length : 0,
+      attendances: event.attendances || [],
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt
+    }));
 
+    res.json({
+      success: true,
+      events: formattedEvents,
+      total: formattedEvents.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching events:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
 
-# ==== ./backend/scripts/fixAadharValidation.js ====
-
-const { sequelize } = require('../config/database');
-const User = require('../models/User');
-
-async function fixAadharValidation() {
+// Get single event
+const getEvent = async (req, res) => {
   try {
-    console.log('🔧 Starting Aadhar validation fix...');
+    const { id } = req.params;
 
-    // Connect to database
-    await sequelize.authenticate();
-    console.log('✅ Database connected');
-
-    // Clean up any empty string aadharNumber values to null
-    const [affectedCount] = await sequelize.query(`
-      UPDATE users 
-      SET aadharNumber = NULL 
-      WHERE aadharNumber = '' OR aadharNumber = ' '
-    `);
-
-    console.log(`🧹 Cleaned ${affectedCount} empty aadharNumber values`);
-
-    // Sync the model with new validation
-    await sequelize.sync({ alter: true });
-    console.log('✅ Database synced with new validation rules');
-
-    // Test the validation
-    console.log('🧪 Testing new validation...');
-    
-    // This should work (empty/null value)
-    try {
-      const testUser = User.build({
-        membershipId: 'TEST123',
-        fullName: 'Test User',
-        fatherName: 'Test Father',
-        address: 'Test Address',
-        phone: '1234567890',
-        email: 'test@example.com',
-        dateOfBirth: new Date('1990-01-01'),
-        password: 'testpass',
-        aadharNumber: null // This should be allowed
-      });
-      await testUser.validate();
-      console.log('✅ Null aadharNumber validation passed');
-    } catch (error) {
-      console.error('❌ Null validation failed:', error.message);
-    }
-
-    // This should work (valid 12-digit number)
-    try {
-      const testUser2 = User.build({
-        membershipId: 'TEST124',
-        fullName: 'Test User 2',
-        fatherName: 'Test Father',
-        address: 'Test Address',
-        phone: '1234567891',
-        email: 'test2@example.com',
-        dateOfBirth: new Date('1990-01-01'),
-        password: 'testpass',
-        aadharNumber: '123456789012' // Valid 12-digit number
-      });
-      await testUser2.validate();
-      console.log('✅ Valid aadharNumber validation passed');
-    } catch (error) {
-      console.error('❌ Valid aadhar validation failed:', error.message);
-    }
-
-    // This should fail (invalid aadhar)
-    try {
-      const testUser3 = User.build({
-        membershipId: 'TEST125',
-        fullName: 'Test User 3',
-        fatherName: 'Test Father',
-        address: 'Test Address',
-        phone: '1234567892',
-        email: 'test3@example.com',
-        dateOfBirth: new Date('1990-01-01'),
-        password: 'testpass',
-        aadharNumber: '12345' // Invalid length
-      });
-      await testUser3.validate();
-      console.log('❌ Invalid aadharNumber validation should have failed');
-    } catch (error) {
-      console.log('✅ Invalid aadharNumber correctly rejected:', error.message);
-    }
-
-    console.log('🎉 Aadhar validation fix completed successfully!');
-    
-  } catch (error) {
-    console.error('💥 Migration failed:', error);
-    throw error;
-  }
-}
-
-// Run migration if called directly
-if (require.main === module) {
-  fixAadharValidation()
-    .then(() => {
-      console.log('✅ Migration completed successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('💥 Migration failed:', error);
-      process.exit(1);
+    const event = await Event.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'fullName', 'role']
+        },
+        {
+          model: Attendance,
+          as: 'attendances',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'fullName', 'membershipId', 'phone', 'email']
+            },
+            {
+              model: User,
+              as: 'marker',
+              attributes: ['id', 'fullName']
+            }
+          ]
+        }
+      ]
     });
-}
 
-module.exports = fixAadharValidation;
+    if (!event) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Event not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      event: {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        eventDate: event.eventDate,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        location: event.location,
+        address: event.address,
+        eventType: event.eventType,
+        maxAttendees: event.maxAttendees,
+        isActive: event.isActive,
+        qrCode: event.qrCode,
+        createdBy: event.createdBy,
+        creator: event.creator,
+        attendances: event.attendances || [],
+        attendanceCount: event.attendances ? event.attendances.length : 0,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching event:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Update event (Admin only)
+const updateEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const event = await Event.findByPk(id);
+    if (!event) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Event not found' 
+      });
+    }
+
+    await event.update(updateData);
+
+    console.log('✅ Event updated:', event.id);
+
+    res.json({
+      success: true,
+      message: 'Event updated successfully',
+      event
+    });
+  } catch (error) {
+    console.error('❌ Error updating event:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Delete event (Admin only)
+const deleteEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const event = await Event.findByPk(id);
+    if (!event) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Event not found' 
+      });
+    }
+
+    await event.destroy();
+
+    console.log('✅ Event deleted:', id);
+
+    res.json({
+      success: true,
+      message: 'Event deleted successfully'
+    });
+  } catch (error) {
+    console.error('❌ Error deleting event:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+module.exports = {
+  createEvent,
+  getAllEvents,
+  getEvent,
+  updateEvent,
+  deleteEvent
+};
 
 # ==== ./backend/controllers/memberController.js ====
 
@@ -8393,6 +10902,382 @@ module.exports = {
   updateProfile 
 };
 
+# ==== ./backend/controllers/attendanceController.js ====
+
+// backend/controllers/attendanceController.js - FIXED VERSION
+const { Op } = require('sequelize');
+const Attendance = require('../models/Attendance');
+const Event = require('../models/Event');
+const User = require('../models/User');
+
+// Mark attendance via QR scan
+const markAttendance = async (req, res) => {
+  try {
+    const { qrData, location, attendanceType = 'event', notes } = req.body;
+    
+    console.log('📋 Marking attendance:', { 
+      markedBy: req.user.id, 
+      location, 
+      attendanceType,
+      qrData: qrData?.substring(0, 10) + '...' // Only show first 10 chars for privacy
+    });
+
+    let parsedQrData;
+    try {
+      parsedQrData = JSON.parse(qrData);
+    } catch (error) {
+      // If QR data is just membershipId (simple QR)
+      parsedQrData = { membershipId: qrData };
+    }
+
+    // Find the user whose attendance is being marked
+    const user = await User.findOne({
+      where: { membershipId: parsedQrData.membershipId },
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!user) {
+      console.log('❌ Member not found:', parsedQrData.membershipId);
+      return res.status(404).json({ 
+        success: false,
+        message: 'Member not found' 
+      });
+    }
+
+    console.log('👤 Found member:', user.fullName, '- ID:', user.membershipId);
+
+    // Handle event attendance
+    let eventId = null;
+    let finalLocation = location || 'Event Location'; // DEFAULT LOCATION FIX
+    
+    if (attendanceType === 'event' && parsedQrData.eventId) {
+      const event = await Event.findByPk(parsedQrData.eventId);
+      if (!event) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Event not found' 
+        });
+      }
+      eventId = event.id;
+      finalLocation = event.location || 'Event Location'; // Use event location
+      
+      console.log('📅 Event found:', event.title, 'at', finalLocation);
+      
+      // Check if already marked for this event
+      const existingAttendance = await Attendance.findOne({
+        where: {
+          userId: user.id,
+          eventId: eventId
+        }
+      });
+
+      if (existingAttendance) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Attendance already marked for this event',
+          attendance: existingAttendance
+        });
+      }
+    } else if (attendanceType === 'event') {
+      // For event attendance without specific event ID, use generic location
+      finalLocation = location || 'Event Location';
+    } else {
+      // For location visits, location should be provided
+      if (!location) {
+        return res.status(400).json({
+          success: false,
+          message: 'Location is required for location visits'
+        });
+      }
+      finalLocation = location;
+    }
+
+    // Determine status based on timing (for events)
+    let status = 'present';
+    if (eventId) {
+      const event = await Event.findByPk(eventId);
+      const eventDateTime = new Date(`${event.eventDate.toDateString()} ${event.startTime}`);
+      const currentTime = new Date();
+      
+      if (currentTime > eventDateTime) {
+        const lateDuration = currentTime - eventDateTime;
+        if (lateDuration > 15 * 60 * 1000) { // 15 minutes late
+          status = 'late';
+        }
+      }
+    }
+
+    console.log('💾 Creating attendance record:', {
+      userId: user.id,
+      eventId,
+      location: finalLocation,
+      attendanceType,
+      status
+    });
+
+    // Create attendance record
+    const attendance = await Attendance.create({
+      userId: user.id,
+      eventId,
+      location: finalLocation, // This is now guaranteed to have a value
+      attendanceType,
+      checkInTime: new Date(),
+      markedBy: req.user.id,
+      notes,
+      status
+    });
+
+    // Fetch complete attendance data with relations
+    const completeAttendance = await Attendance.findByPk(attendance.id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'fullName', 'membershipId', 'phone', 'email', 'role']
+        },
+        {
+          model: User,
+          as: 'marker',
+          attributes: ['id', 'fullName', 'role']
+        },
+        {
+          model: Event,
+          as: 'event',
+          attributes: ['id', 'title', 'eventDate', 'location']
+        }
+      ]
+    });
+
+    console.log('✅ Attendance marked successfully for:', user.fullName);
+
+    res.json({
+      success: true,
+      message: `Attendance marked successfully for ${user.fullName}`,
+      attendance: completeAttendance
+    });
+  } catch (error) {
+    console.error('❌ Error marking attendance:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Get attendance records
+const getAttendanceRecords = async (req, res) => {
+  try {
+    const { 
+      eventId, 
+      location, 
+      userId, 
+      startDate, 
+      endDate,
+      attendanceType,
+      page = 1,
+      limit = 50 
+    } = req.query;
+
+    let whereCondition = {};
+    
+    if (eventId) whereCondition.eventId = eventId;
+    if (location) whereCondition.location = location;
+    if (userId) whereCondition.userId = userId;
+    if (attendanceType) whereCondition.attendanceType = attendanceType;
+    
+    if (startDate && endDate) {
+      whereCondition.checkInTime = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+
+    const offset = (page - 1) * limit;
+
+    const { count, rows: attendances } = await Attendance.findAndCountAll({
+      where: whereCondition,
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'fullName', 'membershipId', 'phone', 'role']
+        },
+        {
+          model: User,
+          as: 'marker',
+          attributes: ['id', 'fullName', 'role']
+        },
+        {
+          model: Event,
+          as: 'event',
+          attributes: ['id', 'title', 'eventDate', 'location'],
+          required: false
+        }
+      ],
+      order: [['checkInTime', 'DESC']],
+      limit: parseInt(limit),
+      offset
+    });
+
+    res.json({
+      success: true,
+      attendances,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching attendance records:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Get attendance summary/statistics
+const getAttendanceStats = async (req, res) => {
+  try {
+    const { eventId, startDate, endDate } = req.query;
+
+    let whereCondition = {};
+    
+    if (eventId) whereCondition.eventId = eventId;
+    
+    if (startDate && endDate) {
+      whereCondition.checkInTime = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+
+    // Get total attendance count
+    const totalAttendance = await Attendance.count({
+      where: whereCondition
+    });
+
+    // Get attendance by location
+    const attendanceByLocation = await Attendance.findAll({
+      attributes: [
+        'location',
+        [Attendance.sequelize.fn('COUNT', Attendance.sequelize.col('id')), 'count']
+      ],
+      where: whereCondition,
+      group: ['location'],
+      raw: true
+    });
+
+    // Get attendance by type
+    const attendanceByType = await Attendance.findAll({
+      attributes: [
+        'attendanceType',
+        [Attendance.sequelize.fn('COUNT', Attendance.sequelize.col('id')), 'count']
+      ],
+      where: whereCondition,
+      group: ['attendanceType'],
+      raw: true
+    });
+
+    // Get top attendees
+    const topAttendees = await Attendance.findAll({
+      attributes: [
+        'userId',
+        [Attendance.sequelize.fn('COUNT', Attendance.sequelize.col('Attendance.id')), 'attendanceCount']
+      ],
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['fullName', 'membershipId', 'role']
+        }
+      ],
+      where: whereCondition,
+      group: ['userId'],
+      order: [[Attendance.sequelize.literal('attendanceCount'), 'DESC']],
+      limit: 10
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalAttendance,
+        attendanceByLocation,
+        attendanceByType,
+        topAttendees
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching attendance stats:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Mark checkout (for location visits)
+const markCheckout = async (req, res) => {
+  try {
+    const { attendanceId } = req.params;
+    const { notes } = req.body;
+
+    const attendance = await Attendance.findByPk(attendanceId, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'fullName', 'membershipId']
+        }
+      ]
+    });
+
+    if (!attendance) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Attendance record not found' 
+      });
+    }
+
+    if (attendance.checkOutTime) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Checkout already marked' 
+      });
+    }
+
+    await attendance.update({
+      checkOutTime: new Date(),
+      notes: notes || attendance.notes
+    });
+
+    console.log('✅ Checkout marked for:', attendance.user.fullName);
+
+    res.json({
+      success: true,
+      message: 'Checkout marked successfully',
+      attendance
+    });
+  } catch (error) {
+    console.error('❌ Error marking checkout:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+module.exports = {
+  markAttendance,
+  getAttendanceRecords,
+  getAttendanceStats,
+  markCheckout
+};
+
 # ==== ./backend/controllers/authController.js ====
 
 // backend/controllers/authController.js - FIXED VERSION with consistent field names
@@ -8648,6 +11533,66 @@ const login = async (req, res) => {
 };
 
 module.exports = { register, login };
+
+# ==== ./backend/routes/events.js ====
+
+// backend/routes/events.js - COMPLETE with attendance routes
+const express = require('express');
+const { auth, adminAuth, adminOnlyAuth } = require('../middleware/auth');
+const { 
+  createEvent, 
+  getAllEvents, 
+  getEvent, 
+  updateEvent, 
+  deleteEvent 
+} = require('../controllers/eventController');
+const {
+  markAttendance,
+  getAttendanceRecords,
+  getAttendanceStats,
+  markCheckout
+} = require('../controllers/attendanceController');
+
+const router = express.Router();
+
+// Test routes
+router.get('/test', (req, res) => {
+  console.log('🧪 Events test route called');
+  res.json({
+    success: true,
+    message: 'Events API is working',
+    timestamp: new Date()
+  });
+});
+
+router.get('/test-auth', auth, (req, res) => {
+  console.log('🧪 Events auth test route called by:', req.user?.fullName);
+  res.json({
+    success: true,
+    message: 'Events auth is working',
+    user: {
+      id: req.user?.id,
+      name: req.user?.fullName,
+      role: req.user?.role
+    },
+    timestamp: new Date()
+  });
+});
+
+// Event CRUD routes
+router.post('/', auth, adminOnlyAuth, createEvent); // Admin only can create events
+router.get('/', auth, getAllEvents); // All authenticated users can view events
+router.get('/:id', auth, getEvent); // Get single event
+router.put('/:id', auth, adminOnlyAuth, updateEvent); // Admin only can update
+router.delete('/:id', auth, adminOnlyAuth, deleteEvent); // Admin only can delete
+
+// Attendance routes
+router.post('/attendance/mark', auth, adminAuth, markAttendance); // Admin/Organizer can mark attendance
+router.get('/attendance/records', auth, adminAuth, getAttendanceRecords); // Admin/Organizer can view records
+router.get('/attendance/stats', auth, adminAuth, getAttendanceStats); // Admin/Organizer can view stats
+router.patch('/attendance/:attendanceId/checkout', auth, adminAuth, markCheckout); // Mark checkout
+
+module.exports = router;
 
 # ==== ./backend/routes/auth.js ====
 
