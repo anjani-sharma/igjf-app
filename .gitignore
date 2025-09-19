@@ -1,1 +1,3 @@
 backend/database.sqlite
+.env
+backend/.env
