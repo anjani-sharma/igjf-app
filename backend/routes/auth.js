@@ -1,3 +1,4 @@
+// backend/routes/auth.js - COMPLETE FILE
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -31,7 +32,23 @@ const upload = multer({
   }
 });
 
-router.post('/register', upload.single('profilePhoto'), register);
+// Error handling middleware for multer
+const uploadHandler = (req, res, next) => {
+  upload.single('profilePhoto')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      // A multer error occurred during upload
+      return res.status(400).json({ message: err.message });
+    } else if (err) {
+      // An unknown error occurred when uploading
+      return res.status(500).json({ message: err.message });
+    }
+    // Everything went fine
+    next();
+  });
+};
+
+// Routes
+router.post('/register', uploadHandler, register);
 router.post('/login', login);
 
 module.exports = router;

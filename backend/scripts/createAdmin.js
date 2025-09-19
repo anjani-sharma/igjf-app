@@ -16,14 +16,15 @@ const createAdminUser = async () => {
       console.log('Admin user already exists:');
       console.log('Email:', adminExists.email);
       console.log('You can use this account to login');
+      
       return;
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash('admin123', 12);
+    const hashedPassword = await bcrypt.hash('pass1', 12);
     
     // Generate membership ID
-    const membershipId = 'GJMF-ADMIN-2025';
+    const membershipId = 'GJMF-ADMIN-2026';
     
     // Create QR code data
     const qrData = {
@@ -43,7 +44,7 @@ const createAdminUser = async () => {
       fatherName: 'System',
       address: 'Party Headquarters',
       phone: '+91-9999999999',
-      email: 'admin@gorkhajanshakti.org',
+      email: 'admin@gmail.com',
       dateOfBirth: new Date('1990-01-01'),
       occupation: 'Administrator',
       constituency: 'Central Office',
@@ -55,8 +56,8 @@ const createAdminUser = async () => {
     });
 
     console.log('✅ Admin user created successfully!');
-    console.log('📧 Email: admin@gorkhajanshakti.org');
-    console.log('🔑 Password: admin123');
+    console.log('📧 Email: admin@gmail.com');
+    console.log('🔑 Password: pass1');
     console.log('🆔 Membership ID:', adminUser.membershipId);
     console.log('\nYou can now login with these credentials.');
     

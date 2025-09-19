@@ -1,37 +1,52 @@
+// File: backend/controllers/memberController.js - COMPLETE FIXED VERSION
+
 const User = require('../models/User');
 const { sendRoleUpdateEmail } = require('../services/emailService');
 
 const getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] } // Only exclude password, include qrCodeData for mobile app
     });
     
-    // Format response to match mobile app expectations
-    const formattedUser = {
-      _id: user.id,
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // 🔥 FIXED: Return consistent structure that works with mobile app
+    const profileData = {
+      id: user.id,
       membershipId: user.membershipId,
-      personalInfo: {
-        fullName: user.fullName,
-        fatherName: user.fatherName,
-        address: user.address,
-        phone: user.phone,
-        email: user.email,
-        dateOfBirth: user.dateOfBirth,
-        occupation: user.occupation,
-        constituency: user.constituency
-      },
-      profilePhoto: user.profilePhoto,
+      name: user.fullName,        // For backward compatibility
+      fullName: user.fullName,    // Primary field
+      fatherName: user.fatherName,
+      email: user.email,
+      phone: user.phone,
+      dateOfBirth: user.dateOfBirth,
+      occupation: user.occupation,
+      address: user.address,
+      city: user.city,
+      state: user.state,
+      pincode: user.pincode,
+      constituency: user.constituency,
+      gender: user.gender,
       role: user.role,
+      isVerified: user.isVerified,
+      isActive: user.isActive,
+      profilePhoto: user.profilePhoto,
       qrCode: user.qrCode,
       qrCodeData: user.qrCodeData,
-      isVerified: user.isVerified,
+      aadharNumber: user.aadharNumber,
+      aadharVerified: user.aadharVerified,
+      aadharVerificationDate: user.aadharVerificationDate,
+      registeredBy: user.registeredBy,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
     };
     
-    res.json(formattedUser);
+    res.json(profileData);
   } catch (error) {
+    console.error('❌ Error getting profile:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -39,31 +54,65 @@ const getProfile = async (req, res) => {
 const getAllMembers = async (req, res) => {
   try {
     const members = await User.findAll({
-      attributes: { exclude: ['password', 'qrCodeData'] }
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']]
     });
     
-    // Format response for mobile app
-    const formattedMembers = members.map(user => ({
-      _id: user.id,
-      membershipId: user.membershipId,
+    // 🔥 FIXED: Transform to structure that works with mobile app components
+    const transformedMembers = members.map(member => ({
+      // Direct fields (for new components)
+      id: member.id,
+      _id: member.id, // For components expecting _id
+      membershipId: member.membershipId,
+      name: member.fullName,
+      fullName: member.fullName,
+      role: member.role,
+      email: member.email,
+      phone: member.phone,
+      isVerified: member.isVerified,
+      isActive: member.isActive,
+      profilePhoto: member.profilePhoto,
+      createdAt: member.createdAt,
+      
+      // PersonalInfo structure (for components expecting nested structure)
       personalInfo: {
-        fullName: user.fullName,
-        fatherName: user.fatherName,
-        address: user.address,
-        phone: user.phone,
-        email: user.email,
-        dateOfBirth: user.dateOfBirth,
-        occupation: user.occupation,
-        constituency: user.constituency
+        fullName: member.fullName,
+        fatherName: member.fatherName,
+        email: member.email,
+        phone: member.phone,
+        dateOfBirth: member.dateOfBirth,
+        gender: member.gender,
+        occupation: member.occupation,
+        address: member.address,
+        city: member.city,
+        state: member.state,
+        pincode: member.pincode,
+        constituency: member.constituency,
+        aadharNumber: member.aadharNumber,
+        aadharVerified: member.aadharVerified,
       },
-      profilePhoto: user.profilePhoto,
-      role: user.role,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt
+      
+      // All other fields
+      fatherName: member.fatherName,
+      dateOfBirth: member.dateOfBirth,
+      occupation: member.occupation,
+      address: member.address,
+      city: member.city,
+      state: member.state,
+      pincode: member.pincode,
+      constituency: member.constituency,
+      gender: member.gender,
+      aadharNumber: member.aadharNumber,
+      aadharVerified: member.aadharVerified,
+      aadharVerificationDate: member.aadharVerificationDate,
+      qrCode: member.qrCode,
+      registeredBy: member.registeredBy,
+      updatedAt: member.updatedAt,
     }));
     
-    res.json(formattedMembers);
+    res.json(transformedMembers);
   } catch (error) {
+    console.error('❌ Error getting all members:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -82,16 +131,29 @@ const scanQRCode = async (req, res) => {
       return res.status(404).json({ message: 'Member not found' });
     }
 
-    res.json({
+    // 🔥 FIXED: Return consistent member data for scanner
+    const memberData = {
+      id: user.id,
       membershipId: user.membershipId,
       name: user.fullName,
+      fullName: user.fullName,
       phone: user.phone,
       email: user.email,
+      role: user.role,
       constituency: user.constituency,
       profilePhoto: user.profilePhoto,
-      joinDate: user.createdAt
+      isVerified: user.isVerified,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      joinDate: user.createdAt // Alias for compatibility
+    };
+
+    res.json({
+      success: true,
+      member: memberData
     });
   } catch (error) {
+    console.error('❌ QR scan error:', error);
     res.status(500).json({ message: 'Invalid QR Code', error: error.message });
   }
 };
@@ -101,23 +163,33 @@ const updateMemberRole = async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
 
-    // Validate role
+    console.log('🔄 Role update request:', { memberId: id, newRole: role, requestedBy: req.user.id });
+
     if (!['member', 'organizer', 'admin'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role specified' });
     }
 
-    // Find and update user
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({ message: 'Member not found' });
     }
 
-    const oldRole = user.role;
+    // Prevent users from updating their own role
+    if (user.id === req.user.id) {
+      return res.status(403).json({ message: 'Cannot update your own role' });
+    }
 
-    // Update role
+    // Only admins can create other admins
+    if (role === 'admin' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can assign admin role' });
+    }
+
+    const oldRole = user.role;
     await user.update({ role });
 
-    // Send role update email if role changed
+    console.log('✅ Role updated:', { member: user.fullName, from: oldRole, to: role });
+
+    // Send email notification
     if (oldRole !== role) {
       const emailData = {
         name: user.fullName,
@@ -131,15 +203,21 @@ const updateMemberRole = async (req, res) => {
     }
 
     res.json({
+      success: true,
       message: 'Role updated successfully',
       member: {
         id: user.id,
         name: user.fullName,
+        fullName: user.fullName,
         email: user.email,
-        role: user.role
+        membershipId: user.membershipId,
+        role: user.role,
+        oldRole,
+        newRole: role
       }
     });
   } catch (error) {
+    console.error('❌ Error updating role:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -149,12 +227,12 @@ const deleteMember = async (req, res) => {
     const { id } = req.params;
     const { confirmationText } = req.body;
 
-    // Validate member ID
+    console.log('🗑️ Delete request:', { memberId: id, requestedBy: req.user.id, confirmation: confirmationText });
+
     if (!id) {
       return res.status(400).json({ message: 'Member ID is required' });
     }
 
-    // Security check - require confirmation text
     if (confirmationText !== 'DELETE MEMBER') {
       return res.status(400).json({ 
         message: 'Confirmation text required. Type "DELETE MEMBER" to confirm.',
@@ -163,11 +241,10 @@ const deleteMember = async (req, res) => {
       });
     }
 
-    // Find the member to delete
     const member = await User.findByPk(id);
     
     if (!member) {
-      // Let's also search by membershipId in case there's confusion
+      // Try finding by membership ID as fallback
       const memberByMembershipId = await User.findOne({ 
         where: { membershipId: id } 
       });
@@ -180,30 +257,30 @@ const deleteMember = async (req, res) => {
       return res.status(404).json({ message: 'Member not found' });
     }
 
-    // Prevent admin from deleting themselves
     if (member.id === req.user.id) {
       return res.status(400).json({ 
         message: 'Cannot delete your own account' 
       });
     }
 
-    // Prevent deleting other admins (optional security measure)
-    if (member.role === 'admin' && req.user.role !== 'superadmin') {
+    if (member.role === 'admin' && req.user.role !== 'admin') {
       return res.status(403).json({ 
-        message: 'Cannot delete other admin accounts' 
+        message: 'Cannot delete admin accounts' 
       });
     }
 
-    // Store member info for response before deletion
     const memberInfo = {
+      id: member.id,
       name: member.fullName,
+      fullName: member.fullName,
       membershipId: member.membershipId,
       email: member.email,
       role: member.role
     };
     
-    // Delete the member
     await member.destroy();
+
+    console.log('✅ Member deleted:', memberInfo);
 
     res.json({
       success: true,
@@ -213,7 +290,7 @@ const deleteMember = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error deleting member:', error);
+    console.error('❌ Error deleting member:', error);
     
     res.status(500).json({ 
       success: false,
@@ -225,96 +302,120 @@ const deleteMember = async (req, res) => {
   }
 };
 
+// 🔥 COMPREHENSIVE FIXED updateProfile function
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { 
-      fullName, 
-      fatherName, 
-      address, 
-      phone, 
-      email, 
-      dateOfBirth, 
-      occupation, 
-      constituency 
-    } = req.body;
+    const updateData = req.body;
 
-    // Find the user
+    console.log('📝 Profile update request:', { 
+      userId, 
+      fields: Object.keys(updateData),
+      aadharProvided: !!(updateData.aadharNumber || updateData.aadhaarNumber)
+    });
+
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if email is being changed and if it's already taken by another user
-    if (email && email !== user.email) {
-      const existingUser = await User.findOne({ 
-        where: { 
-          email,
-          id: { [Op.ne]: userId } // Exclude current user
-        } 
-      });
-      
-      if (existingUser) {
-        return res.status(400).json({ message: 'Email already exists' });
+    // 🔥 Helper function to clean empty strings to null
+    const cleanEmptyString = (value) => {
+      if (typeof value === 'string' && value.trim() === '') {
+        return null;
       }
+      return value;
+    };
+
+    // 🔥 NORMALIZE: Handle both aadhar/aadhaar spellings
+    if (updateData.aadhaarNumber !== undefined && updateData.aadharNumber === undefined) {
+      updateData.aadharNumber = updateData.aadhaarNumber;
     }
 
-    // Prepare update data
-    const updateData = {};
+    // Prepare clean update data
+    const cleanUpdateData = {};
     
-    // Only update fields that are provided
-    if (fullName !== undefined) updateData.fullName = fullName;
-    if (fatherName !== undefined) updateData.fatherName = fatherName;
-    if (address !== undefined) updateData.address = address;
-    if (phone !== undefined) updateData.phone = phone;
-    if (email !== undefined) updateData.email = email;
-    if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth;
-    if (occupation !== undefined) updateData.occupation = occupation;
-    if (constituency !== undefined) updateData.constituency = constituency;
+    // Handle all possible fields
+    const fieldMappings = {
+      fullName: 'fullName',
+      fatherName: 'fatherName',
+      address: 'address',
+      phone: 'phone',
+      email: 'email',
+      dateOfBirth: 'dateOfBirth',
+      occupation: 'occupation',
+      constituency: 'constituency',
+      gender: 'gender',
+      city: 'city',
+      state: 'state',
+      pincode: 'pincode',
+      aadharNumber: 'aadharNumber'
+    };
 
-    // Handle profile photo update
+    // Process each field
+    Object.entries(fieldMappings).forEach(([key, dbField]) => {
+      if (updateData[key] !== undefined) {
+        cleanUpdateData[dbField] = cleanEmptyString(updateData[key]);
+      }
+    });
+
+    // Handle profile photo
     if (req.file) {
-      updateData.profilePhoto = `/uploads/${req.file.filename}`;
+      cleanUpdateData.profilePhoto = `uploads/${req.file.filename}`;
     }
 
-    // Update the user
-    await user.update(updateData);
+    console.log('🧹 Cleaned update data:', cleanUpdateData);
 
-    // Get updated user data (excluding password)
+    await user.update(cleanUpdateData);
+
     const updatedUser = await User.findByPk(userId, {
       attributes: { exclude: ['password'] }
     });
 
-    // Format response to match mobile app expectations
+    console.log('✅ Profile updated successfully');
+
+    // 🔥 Return consistent structure
     const responseData = {
-      _id: updatedUser.id,
+      id: updatedUser.id,
       membershipId: updatedUser.membershipId,
-      personalInfo: {
-        fullName: updatedUser.fullName,
-        fatherName: updatedUser.fatherName,
-        address: updatedUser.address,
-        phone: updatedUser.phone,
-        email: updatedUser.email,
-        dateOfBirth: updatedUser.dateOfBirth,
-        occupation: updatedUser.occupation,
-        constituency: updatedUser.constituency
-      },
-      profilePhoto: updatedUser.profilePhoto,
+      name: updatedUser.fullName,
+      fullName: updatedUser.fullName,
+      fatherName: updatedUser.fatherName,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      dateOfBirth: updatedUser.dateOfBirth,
+      occupation: updatedUser.occupation,
+      address: updatedUser.address,
+      city: updatedUser.city,
+      state: updatedUser.state,
+      pincode: updatedUser.pincode,
+      constituency: updatedUser.constituency,
+      gender: updatedUser.gender,
       role: updatedUser.role,
+      isVerified: updatedUser.isVerified,
+      isActive: updatedUser.isActive,
+      profilePhoto: updatedUser.profilePhoto,
       qrCode: updatedUser.qrCode,
       qrCodeData: updatedUser.qrCodeData,
+      aadharNumber: updatedUser.aadharNumber,
+      aadharVerified: updatedUser.aadharVerified,
+      aadharVerificationDate: updatedUser.aadharVerificationDate,
+      registeredBy: updatedUser.registeredBy,
       createdAt: updatedUser.createdAt,
-      updatedAt: updatedUser.updatedAt
+      updatedAt: updatedUser.updatedAt,
     };
 
     res.json({
+      success: true,
       message: 'Profile updated successfully',
-      profile: responseData
+      profile: responseData,
+      user: responseData // For backward compatibility
     });
 
   } catch (error) {
-    console.error('Error updating profile:', error);
+    console.error('❌ Error updating profile:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Server error occurred while updating profile', 
       error: error.message 
     });

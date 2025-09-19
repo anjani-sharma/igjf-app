@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 const User = sequelize.define('User', {
   id: {
@@ -12,6 +13,8 @@ const User = sequelize.define('User', {
     unique: true,
     allowNull: false,
   },
+  
+  // Existing fields (keeping your structure)
   fullName: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -67,9 +70,117 @@ const User = sequelize.define('User', {
   registeredBy: {
     type: DataTypes.UUID,
   },
+  
+  // FIXED Aadhar-specific fields with proper validation
+  aadharNumber: {
+    type: DataTypes.STRING(12),
+    allowNull: true,
+    validate: {
+      // Custom validation that allows null/empty values but validates when present
+      aadharValidation(value) {
+        if (value && value.trim() !== '') {
+          // Only validate if value is not empty
+          if (value.length !== 12) {
+            throw new Error('Aadhar number must be exactly 12 digits');
+          }
+          if (!/^\d{12}$/.test(value)) {
+            throw new Error('Aadhar number must contain only digits');
+          }
+        }
+      }
+    }
+  },
+  aadharVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  aadharVerificationDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  
+  // Additional fields for enhanced registration
+  gender: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  pincode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
 }, {
   tableName: 'users',
-  timestamps: true, // This adds createdAt and updatedAt automatically
+  timestamps: true,
+  hooks: {
+    beforeCreate: async (user) => {
+      // Hash password if provided
+      if (user.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+      
+      // Generate membership ID if not provided
+      if (!user.membershipId) {
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        user.membershipId = `GJF${timestamp}${random}`;
+      }
+      
+      // Clean empty aadharNumber to null
+      if (user.aadharNumber === '') {
+        user.aadharNumber = null;
+      }
+      
+      // Set Aadhar verification date if verified
+      if (user.aadharVerified) {
+        user.aadharVerificationDate = new Date();
+      }
+    },
+    beforeUpdate: async (user) => {
+      // Hash password if changed
+      if (user.changed('password') && user.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+      
+      // Clean empty aadharNumber to null
+      if (user.changed('aadharNumber') && user.aadharNumber === '') {
+        user.aadharNumber = null;
+      }
+      
+      // Update verification date if Aadhar status changed
+      if (user.changed('aadharVerified') && user.aadharVerified) {
+        user.aadharVerificationDate = new Date();
+      }
+    }
+  }
 });
+
+// Instance method to check password
+User.prototype.validatePassword = async function(password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+// Instance method to get public profile
+User.prototype.getPublicProfile = function() {
+  const { password, ...publicData } = this.toJSON();
+  return {
+    ...publicData,
+    hasAadhar: !!this.aadharNumber,
+    verificationStatus: this.aadharVerified ? 'verified' : 'unverified'
+  };
+};
 
 module.exports = User;

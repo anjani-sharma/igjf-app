@@ -1,38 +1,166 @@
-import React, { useState, useEffect } from 'react';
+// File: mobile-app/app/dashboard.tsx - FIXED LAYOUT VERSION with Flag
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
+  RefreshControl,
+  Image,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import QRCode from 'react-native-qrcode-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiRequest } from '../utils/apiUtils';
+import { User } from '../contexts/AuthContext'; 
+
+// Party flag image - Comment this out if you don't have the flag image
+// const partyFlag = require('./images/flag.jpeg');
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    accent: '#E0E0E0',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+      onSecondary: '#ffffff',
+    },
+    border: '#eee',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    gold: '#FFD700',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 40,
+  },
+  typography: {
+    h1: { fontSize: 32, fontWeight: 'bold' as const },
+    h2: { fontSize: 28, fontWeight: 'bold' as const },
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+  },
+  shadows: {
+    card: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    sm: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+  },
+};
+
+interface UserWithPersonalInfo extends User {
+  personalInfo?: {
+    fullName: string;
+    fatherName: string;
+    address: string;
+    phone: string;
+    email: string;
+    dateOfBirth: string;
+    occupation: string;
+    constituency: string;
+    city: string;
+    state: string;
+    pincode: string;
+    gender: string;
+  };
+}
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const [profile, setProfile] = useState(null);
+  const { user, logout, login } = useAuth();
+  const [profile, setProfile] = useState<UserWithPersonalInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFullDetails, setShowFullDetails] = useState(false);
+  
+  const hasLoadedProfile = useRef(false);
+  const isLoadingProfile = useRef(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const loadProfile = useCallback(async () => {
+    if (isLoadingProfile.current) {
+      return;
+    }
 
-  const loadProfile = async () => {
     try {
-      // In a real app, fetch from API
-      setProfile(user);
+      isLoadingProfile.current = true;
+      setLoading(true);
+      setRefreshing(true);
+      
+      const response = await apiRequest<{ personalInfo: User }>(`/members/profile`, {
+        method: 'GET',
+      });
+      
+      if (response.success && response.data) {
+        const { personalInfo, ...rest } = response.data;
+        const formattedProfile = { ...rest, ...personalInfo };
+        
+        const token = await AsyncStorage.getItem('token');
+        if (token && JSON.stringify(formattedProfile) !== JSON.stringify(user)) {
+          await login(token, formattedProfile as User);
+        }
+
+        setProfile(formattedProfile as UserWithPersonalInfo);
+        hasLoadedProfile.current = true;
+      } else {
+        setProfile(user as UserWithPersonalInfo);
+        hasLoadedProfile.current = true;
+      }
+      
     } catch (error) {
-      Alert.alert('Error', 'Failed to load profile');
+      setProfile(user as UserWithPersonalInfo);
+      hasLoadedProfile.current = true;
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      isLoadingProfile.current = false;
     }
-  };
+  }, [user, login]);
+
+  useEffect(() => {
+    if (!hasLoadedProfile.current && user && !isLoadingProfile.current) {
+      loadProfile();
+    }
+  }, [user, loadProfile]);
+
+  const onRefresh = useCallback(() => {
+    hasLoadedProfile.current = false;
+    setRefreshing(true);
+    loadProfile();
+  }, [loadProfile]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -51,97 +179,412 @@ export default function Dashboard() {
     );
   };
 
-  if (loading) {
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not available';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  };
+  
+  const getDisplayValue = (value: any, fallback = 'Not provided') => {
+    return value && String(value).trim() ? String(value) : fallback;
+  };
+
+  const getDisplayName = () => {
+    const profileName = profile?.fullName || profile?.name;
+    const userName = user?.fullName || user?.name;
+    return profileName || userName || 'Member';
+  };
+
+  const getProfileImageUri = () => {
+    const photoPath = profile?.profilePhoto || user?.profilePhoto;
+    
+    if (photoPath) {
+      let imageUri;
+      if (photoPath.startsWith('http')) {
+        imageUri = photoPath;
+      } else {
+        const cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
+        imageUri = `http://192.168.1.65:5000/${cleanPath}`;
+      }
+      
+      return imageUri;
+    }
+    return null;
+  };
+
+  const isAdmin = () => {
+    return (profile?.role || user?.role) === 'admin';
+  };
+
+  const isOrganizer = () => {
+    return (profile?.role || user?.role) === 'organizer';
+  };
+
+  if (loading && !profile && !user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <ActivityIndicator size="large" color={Theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.welcomeText}>Welcome back,</Text>
-            <Text style={styles.nameText}>{user?.name}</Text>
-          </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {user?.name?.charAt(0)?.toUpperCase()}
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.roleText}>
+                {isAdmin() ? 'ADMIN ACCOUNT' : isOrganizer() ? 'ORGANIZER ACCOUNT' : 'MEMBER ACCOUNT'}
               </Text>
+              <Text style={styles.nameText}>{getDisplayName()}</Text>
             </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.name}</Text>
-              <Text style={styles.profileId}>ID: {user?.membershipId}</Text>
-              <Text style={styles.profileRole}>{user?.role?.toUpperCase()}</Text>
-            </View>
-          </View>
-
-          <View style={styles.profileDetails}>
-            <Text style={styles.detailLabel}>Email</Text>
-            <Text style={styles.detailValue}>{user?.email}</Text>
-          </View>
-        </View>
-
-        {/* QR Code Section */}
-        <View style={styles.qrSection}>
-          <Text style={styles.sectionTitle}>Your QR Code</Text>
-          <View style={styles.qrContainer}>
-            <QRCode
-              value={user?.membershipId || 'No ID'}
-              size={200}
-              color="#1B2951"
-              backgroundColor="white"
-            />
-          </View>
-          <Text style={styles.qrDescription}>
-            Show this QR code for verification
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          {(user?.role === 'admin' || user?.role === 'organizer') && (
-            <>
-              <TouchableOpacity
-                style={styles.primaryAction}
-                onPress={() => router.push('/scanner')}
-              >
-                <Text style={styles.primaryActionText}>📱 Scan QR Code</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.primaryAction}
-                onPress={() => router.push('/members')}
-              >
-                <Text style={styles.primaryActionText}>👥 View Members</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {user?.role === 'admin' && (
-            <TouchableOpacity
-              style={styles.adminAction}
-              onPress={() => router.push('/admin')}
-            >
-              <Text style={styles.adminActionText}>⚙️ Admin Panel</Text>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
-          )}
+          </View>
+        </View>
+
+        <View style={styles.membershipCardContainer}>
+          <View style={[
+            styles.membershipCard, 
+            isAdmin() && styles.adminCard,
+            isOrganizer() && styles.organizerCard
+          ]}>
+            <View style={styles.cardHeader}>
+              <View style={[
+                styles.roleBadge,
+                isAdmin() && styles.adminBadge,
+                isOrganizer() && styles.organizerBadge
+              ]}>
+                <Text style={styles.roleBadgeText}>
+                  {isAdmin() ? '👑 ADMIN' : isOrganizer() ? '👥 ORGANIZER' : '👤 MEMBER'}
+                </Text>
+              </View>
+
+              {/* Flag section - comment out if you don't have the image */}
+              {/*
+              <View style={styles.flagContainer}>
+                <Image 
+                  source={partyFlag} 
+                  style={styles.flagImage} 
+                  resizeMode="contain"
+                />
+              </View>
+              */}
+              
+              <Text style={styles.partyName}>GORKHA JANSHAKTI FRONT</Text>
+            </View>
+
+            {/* NEW LAYOUT: QR code left, Profile picture right */}
+            <View style={styles.cardContent}>
+              {/* Top Row: QR Code (Left) and Profile Picture (Right) */}
+              <View style={styles.topRow}>
+                {/* QR Code Section - LEFT */}
+                <View style={styles.qrSection}>
+                  <View style={styles.qrContainer}>
+                    <QRCode
+                      value={profile?.membershipId || user?.membershipId || 'No ID'}
+                      size={100}
+                      color={Theme.colors.primary}
+                      backgroundColor="transparent"
+                    />
+                  </View>
+                  <Text style={styles.qrLabel}>Scan for Verification</Text>
+                </View>
+
+                {/* Profile Picture Section - RIGHT */}
+                <View style={styles.photoSection}>
+                  {getProfileImageUri() ? (
+                    <Image 
+                      source={{ uri: getProfileImageUri() }}
+                      style={styles.profileImage}
+                    />
+                  ) : (
+                    <View style={styles.avatarContainer}>
+                      <Text style={styles.avatarText}>
+                        {getDisplayName().charAt(0)?.toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Bottom Section: Member Info */}
+              <View style={styles.memberInfoSection}>
+                <Text style={styles.memberName}>{getDisplayName()}</Text>
+                <Text style={styles.membershipId}>
+                  {getDisplayValue(profile?.membershipId || user?.membershipId)}
+                </Text>
+                
+                <View style={styles.memberDetailsRow}>
+                  <View style={styles.memberSince}>
+                    <Text style={styles.memberSinceLabel}>Member Since</Text>
+                    <Text style={styles.memberSinceDate}>
+                      {formatDate(profile?.createdAt || user?.createdAt)}
+                    </Text>
+                  </View>
+
+                  <View style={[
+                    styles.statusBadge,
+                    (profile?.isVerified || user?.isVerified) && styles.verifiedBadge
+                  ]}>
+                    <Text style={[
+                      styles.statusText,
+                      (profile?.isVerified || user?.isVerified) && styles.verifiedText
+                    ]}>
+                      {(profile?.isVerified || user?.isVerified) ? '✓ VERIFIED' : '⏳ PENDING'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.viewDetailsButton}
+              onPress={() => setShowFullDetails(true)}
+            >
+              <Text style={styles.viewDetailsText}>📋 View Full Information</Text>
+              <Text style={styles.viewDetailsArrow}>→</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.quickActions}>
+          <Text style={styles.quickActionsTitle}>Quick Actions</Text>
+          
+          <View style={styles.actionGrid}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/profile-edit')}
+            >
+              <Text style={styles.actionIcon}>✏️</Text>
+              <Text style={styles.actionLabel}>Edit Profile</Text>
+            </TouchableOpacity>
+
+            {isAdmin() && (
+              <TouchableOpacity
+                style={[styles.actionCard, styles.adminAction]}
+                onPress={() => router.push('/admin')}
+              >
+                <Text style={styles.actionIcon}>🏛️</Text>
+                <Text style={[styles.actionLabel, styles.adminActionText]}>Admin Dashboard</Text>
+              </TouchableOpacity>
+            )}
+
+            {(isAdmin() || isOrganizer()) && (
+              <>
+                <TouchableOpacity
+                  style={styles.actionCard}
+                  onPress={() => router.push('/scanner')}
+                >
+                  <Text style={styles.actionIcon}>📱</Text>
+                  <Text style={styles.actionLabel}>Scan QR</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.actionCard}
+                  onPress={() => router.push('/members')}
+                >
+                  <Text style={styles.actionIcon}>👥</Text>
+                  <Text style={styles.actionLabel}>View Members</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
       </ScrollView>
+
+      {/* Modal remains the same */}
+      <Modal
+        visible={showFullDetails}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer} edges={['top', 'left', 'right']}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity 
+              onPress={() => setShowFullDetails(false)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>✕ Close</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Complete Profile</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                setShowFullDetails(false);
+                router.push('/profile-edit');
+              }}
+              style={styles.editButton}
+            >
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.detailSection}>
+              <Text style={styles.detailSectionTitle}>Personal Information</Text>
+              
+              <View style={styles.detailGrid}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Full Name</Text>
+                  <Text style={styles.detailValue}>{getDisplayValue(profile?.fullName || user?.fullName)}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Father's Name</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.fatherName || user?.fatherName)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Email</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.email || user?.email)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Phone</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.phone || user?.phone)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Date of Birth</Text>
+                  <Text style={styles.detailValue}>
+                    {formatDate(profile?.dateOfBirth || user?.dateOfBirth)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Gender</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.gender || user?.gender)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Occupation</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.occupation || user?.occupation)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Aadhar Number</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.aadharNumber || user?.aadharNumber, 'Not Provided')}
+                  </Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Aadhar Verified</Text>
+                  <Text style={[styles.detailValue, (profile?.aadharVerified || user?.aadharVerified) ? styles.verifiedText : styles.pendingText]}>
+                    {(profile?.aadharVerified || user?.aadharVerified) ? 'Verified' : 'Not Verified'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.detailSection}>
+              <Text style={styles.detailSectionTitle}>Address Information</Text>
+              
+              <View style={styles.detailGrid}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Address</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.address || user?.address)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>City</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.city || user?.city)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>State</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.state || user?.state)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Pincode</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.pincode || user?.pincode)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Constituency</Text>
+                  <Text style={styles.detailValue}>
+                    {getDisplayValue(profile?.constituency || user?.constituency)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.detailSection}>
+              <Text style={styles.detailSectionTitle}>Membership Information</Text>
+              
+              <View style={styles.detailGrid}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Membership ID</Text>
+                  <Text style={[styles.detailValue, styles.membershipIdText]}>
+                    {getDisplayValue(profile?.membershipId || user?.membershipId)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Role</Text>
+                  <Text style={[styles.detailValue, styles.detailRoleText]}>
+                    {((profile?.role || user?.role) || 'member').toUpperCase()}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Join Date</Text>
+                  <Text style={styles.detailValue}>
+                    {formatDate(profile?.createdAt || user?.createdAt)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Verification Status</Text>
+                  <Text style={[
+                    styles.detailValue,
+                    (profile?.isVerified || user?.isVerified) ? styles.verifiedText : styles.pendingText
+                  ]}>
+                    {(profile?.isVerified || user?.isVerified) ? 'Verified ✓' : 'Pending Verification ⏳'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
 
       <StatusBar style="light" />
     </SafeAreaView>
@@ -151,7 +594,7 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -159,168 +602,390 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 18,
-    color: '#666',
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
   },
   scrollView: {
     flex: 1,
   },
   header: {
-    backgroundColor: '#1B2951',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+    backgroundColor: Theme.colors.primary,
+    paddingBottom: Theme.spacing.lg,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.lg,
   },
   headerLeft: {
     flex: 1,
   },
-  welcomeText: {
-    color: 'white',
-    fontSize: 16,
+  roleText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.gold,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   nameText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...Theme.typography.h3,
+    color: Theme.colors.text.onPrimary,
+    marginTop: Theme.spacing.xs,
   },
   logoutButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: 'white',
+    borderColor: Theme.colors.text.onPrimary,
   },
   logoutText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
+    ...Theme.typography.body2,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
   },
-  profileCard: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+  membershipCardContainer: {
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.lg,
   },
-  profileHeader: {
+  membershipCard: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.xl,
+    padding: Theme.spacing.lg,
+    ...Theme.shadows.card,
+    borderLeftWidth: 4,
+    borderLeftColor: Theme.colors.secondary,
+  },
+  adminCard: {
+    borderLeftColor: Theme.colors.gold,
+    backgroundColor: '#FFF9E6',
+  },
+  organizerCard: {
+    borderLeftColor: '#2196F3',
+    backgroundColor: '#E3F2FD',
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: Theme.spacing.lg,
+  },
+  roleBadge: {
+    backgroundColor: Theme.colors.secondary,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: Theme.spacing.sm,
+  },
+  adminBadge: {
+    backgroundColor: Theme.colors.gold,
+  },
+  organizerBadge: {
+    backgroundColor: '#2196F3',
+  },
+  roleBadgeText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onSecondary,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  flagContainer: {
+    alignItems: 'center',
+    marginVertical: Theme.spacing.md,
+    width: '100%',
+  },
+  flagImage: {
+    width: 200,
+    height: 100,
+    marginVertical: 5,
+  },
+  partyName: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  
+  // NEW LAYOUT STYLES
+  cardContent: {
+    marginBottom: Theme.spacing.lg,
+  },
+  
+  // Top row with QR code left and profile picture right
+  topRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.sm,
   },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#2D5016',
-    justifyContent: 'center',
+  
+  // QR Code Section (LEFT)
+  qrSection: {
     alignItems: 'center',
-    marginRight: 15,
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  profileInfo: {
     flex: 1,
   },
-  profileName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  profileId: {
-    fontSize: 14,
-    color: '#2D5016',
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  profileRole: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-  },
-  profileDetails: {
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 15,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 5,
-  },
-  detailValue: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  qrSection: {
-    backgroundColor: 'white',
-    margin: 20,
-    marginTop: 0,
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-  },
   qrContainer: {
-    padding: 15,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 10,
-    marginBottom: 15,
+    padding: Theme.spacing.sm,
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.md,
+    marginBottom: Theme.spacing.xs,
+    ...Theme.shadows.sm,
   },
-  qrDescription: {
-    fontSize: 14,
-    color: '#666',
+  qrLabel: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
     textAlign: 'center',
+    fontSize: 11,
   },
-  actionButtons: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  primaryAction: {
-    backgroundColor: '#2D5016',
-    paddingVertical: 15,
-    borderRadius: 10,
+  
+  // Profile Picture Section (RIGHT)
+  photoSection: {
     alignItems: 'center',
-    marginBottom: 10,
+    flex: 1,
   },
-  primaryActionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Theme.colors.background,
+    borderWidth: 3,
+    borderColor: Theme.colors.surface,
+    ...Theme.shadows.sm,
+  },
+  avatarContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Theme.colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: Theme.colors.surface,
+    ...Theme.shadows.sm,
+  },
+  avatarText: {
+    ...Theme.typography.h2,
+    color: Theme.colors.text.onSecondary,
+  },
+  
+  // Member Info Section (BOTTOM)
+  memberInfoSection: {
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.md,
+  },
+  memberName: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.xs,
+  },
+  membershipId: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: Theme.spacing.md,
+    letterSpacing: 1,
+    fontSize: 18,
+  },
+  
+  // Row for member since and status
+  memberDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: Theme.spacing.md,
+  },
+  memberSince: {
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  memberSinceLabel: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontSize: 11,
+  },
+  memberSinceDate: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  statusBadge: {
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.sm,
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: Theme.colors.warning,
+  },
+  verifiedBadge: {
+    backgroundColor: '#E8F5E8',
+    borderColor: Theme.colors.success,
+  },
+  statusText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.warning,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    fontSize: 11,
+  },
+  verifiedText: {
+    color: Theme.colors.success,
+  },
+  
+  // Rest of the styles...
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Theme.colors.background,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+  },
+  viewDetailsText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  viewDetailsArrow: {
+    ...Theme.typography.h4,
+    color: Theme.colors.primary,
+  },
+  quickActions: {
+    padding: Theme.spacing.lg,
+  },
+  quickActionsTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Theme.spacing.md,
+  },
+  actionCard: {
+    backgroundColor: Theme.colors.surface,
+    paddingVertical: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    alignItems: 'center',
+    minWidth: '45%',
+    ...Theme.shadows.sm,
   },
   adminAction: {
-    backgroundColor: '#1B2951',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
+    backgroundColor: Theme.colors.gold,
+  },
+  actionIcon: {
+    fontSize: 24,
+    marginBottom: Theme.spacing.sm,
+  },
+  actionLabel: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   adminActionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: Theme.colors.text.onSecondary,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.md,
+    backgroundColor: Theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  closeButton: {
+    minWidth: 60,
+  },
+  closeButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+  modalTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  editButton: {
+    minWidth: 60,
+    alignItems: 'flex-end',
+  },
+  editButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.secondary,
+    fontWeight: '600',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  detailSection: {
+    backgroundColor: Theme.colors.surface,
+    margin: Theme.spacing.lg,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.lg,
+    ...Theme.shadows.sm,
+  },
+  detailSectionTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+    borderBottomWidth: 2,
+    borderBottomColor: Theme.colors.primary,
+    paddingBottom: Theme.spacing.sm,
+  },
+  detailGrid: {
+    gap: Theme.spacing.md,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: Theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  detailLabel: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+    flex: 1,
+  },
+  detailValue: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    fontWeight: '400',
+    flex: 2,
+    textAlign: 'right',
+  },
+  membershipIdText: {
+    fontWeight: '700',
+    color: Theme.colors.primary,
+  },
+  detailRoleText: {
+    fontWeight: '700',
+    color: Theme.colors.secondary,
+    textTransform: 'capitalize',
+  },
+  pendingText: {
+    color: Theme.colors.warning,
+    fontWeight: '600',
   },
 });

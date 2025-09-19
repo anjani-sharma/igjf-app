@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,7 +24,7 @@ export default function Members() {
   const loadMembers = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/members', {
+      const response = await fetch('http://192.168.1.65:5000/api/members/all', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -32,6 +32,7 @@ export default function Members() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Members data structure:', data[0]); // Log first item to see structure
         setMembers(data);
       } else {
         Alert.alert('Error', 'Failed to load members');
@@ -49,13 +50,13 @@ export default function Members() {
       <View style={styles.memberHeader}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {item.name.charAt(0).toUpperCase()}
+            {item.personalInfo.fullName.charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.name}</Text>
+          <Text style={styles.memberName}>{item.personalInfo.fullName}</Text>
           <Text style={styles.memberId}>ID: {item.membershipId}</Text>
-          <Text style={styles.memberEmail}>{item.email}</Text>
+          <Text style={styles.memberEmail}>{item.personalInfo.email}</Text>
         </View>
       </View>
 
@@ -78,6 +79,7 @@ export default function Members() {
       </View>
     </View>
   );
+   
 
   if (loading) {
     return (
@@ -119,7 +121,7 @@ export default function Members() {
       <FlatList
         data={members}
         renderItem={renderMember}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id?.toString() || item._id?.toString()}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />

@@ -1,27 +1,33 @@
+// mobile-app/app/login.tsx - COMPLETE FILE
 import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { authAPI, handleApiError } from '../services/apiService';
 
-const API_URL = 'http://localhost:3001/api';
+const partyFlag = require('./images/flag.jpeg');
 
 export default function LoginScreen() {
-  const [membershipId, setMembershipId] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    if (!membershipId.trim() || !password.trim()) {
+    // Input validation
+    if (!identifier.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -29,107 +35,118 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          membershipId: membershipId.trim(),
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await login(data.token, data.user);
+      console.log('🔐 Starting login process...');
+      
+      // Call the API using our service
+      const result = await authAPI.login(identifier.trim(), password);
+      
+      if (result.success) {
+        console.log('✅ Login successful');
+        
+        // Save user data using auth context
+        await login(result.data.token, result.data.user);
         
         // Navigate based on user role
-        if (data.user.role === 'admin') {
+        if (result.data.user.role === 'admin') {
           router.replace('/admin');
         } else {
           router.replace('/dashboard');
         }
       } else {
-        Alert.alert('Login Failed', data.message || 'Invalid credentials');
+        console.log('❌ Login failed:', result.error);
+        Alert.alert('Login Failed', result.error || 'Invalid credentials');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      console.error('🚨 Login error:', error);
+      Alert.alert('Connection Error', handleApiError(error));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" />
         
-        <View style={styles.logoSection}>
-          <Text style={styles.partyName}>POLITICAL PARTY</Text>
-          <Text style={styles.title}>Member Login</Text>
-        </View>
-      </View>
-
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Membership ID"
-          value={membershipId}
-          onChangeText={setMembershipId}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <TouchableOpacity
-          style={[styles.loginButton, loading && styles.disabledButton]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.loginButtonText}>
-            {loading ? 'Logging in...' : 'Login'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          
+          <View style={styles.logoSection}>
+            <Text style={styles.partyName}>INDIAN GORKHA JANSHAKTI FRONT</Text>
+            <Text style={styles.title}>Member Login</Text>
+          </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.registerLink}
-          onPress={() => router.push('/register')}
-        >
-          <Text style={styles.registerLinkText}>
-            Register as New Member
-          </Text>
-        </TouchableOpacity>
-      </View>
+        
+        {/* Flag Image */}
+        <View style={styles.imageContainer}>
+          <Image 
+            source={partyFlag} 
+            style={styles.flagImage} 
+            resizeMode="contain"
+            onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}
+            defaultSource={require('./images/flag.jpeg')}
+          />
+        </View>
 
-      <StatusBar style="light" />
-    </SafeAreaView>
+        {/* Form */}
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email or Phone"
+            placeholderTextColor="#999"
+            value={identifier}
+            onChangeText={setIdentifier}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            editable={!loading}
+          />
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!loading}
+          />
+
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.disabledButton]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.loginButtonText}>
+              {loading ? 'Logging in...' : 'Login'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Register Link */}
+          <TouchableOpacity
+            style={styles.registerLink}
+            onPress={() => router.push('/register')}
+          >
+            <Text style={styles.registerText}>
+              Don't have an account? <Text style={styles.registerTextBold}>Register</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -149,26 +166,42 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: '500',
   },
   logoSection: {
     alignItems: 'center',
   },
   partyName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 10,
+    textAlign: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
+  },
+
+  imageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    width: '100%'
+  },
+  flagImage: {
+    width: 250,
+    height: 150,
+    marginVertical: 5
   },
   form: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingTop: 40,
+    paddingTop: 20, // reduced from 40 to accommodate the image
   },
+  
   input: {
     backgroundColor: 'white',
     paddingHorizontal: 15,
@@ -191,36 +224,21 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: '#999',
-  },
-  forgotPassword: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  forgotPasswordText: {
-    color: '#E0E0E0',
-    fontSize: 16,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 30,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  dividerText: {
-    color: '#E0E0E0',
-    paddingHorizontal: 15,
-    fontSize: 16,
+    opacity: 0.6,
   },
   registerLink: {
     alignItems: 'center',
+    marginTop: 30,
+    paddingVertical: 10,
   },
-  registerLinkText: {
-    color: '#4CAF50',
+  registerText: {
+    color: 'white',
     fontSize: 16,
-    textAlign: 'center',
+    opacity: 0.8,
+  },
+  registerTextBold: {
+    color: 'white',
+    fontWeight: 'bold',
+    opacity: 1,
   },
 });

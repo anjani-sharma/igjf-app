@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,7 +27,7 @@ export default function RoleManagement() {
   const loadMembers = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/members', {
+      const response = await fetch('http://192.168.1.65:5000/api/members/all', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -49,8 +49,9 @@ export default function RoleManagement() {
 
   const updateMemberRole = async (memberId, newRole) => {
     try {
+      console.log('Updating member:', memberId, 'to role:', newRole);
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/api/members/${memberId}/role`, {
+      const response = await fetch(`http://192.168.1.65:5000/api/members/role/${memberId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -58,6 +59,10 @@ export default function RoleManagement() {
         },
         body: JSON.stringify({ role: newRole }),
       });
+      console.log('Response status:', response.status); // Add this
+      const responseData = await response.json(); // Add this
+      console.log('Response data:', responseData); // Add this
+
 
       if (response.ok) {
         Alert.alert('Success', 'Role updated successfully');
@@ -88,18 +93,23 @@ export default function RoleManagement() {
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('token');
-              const response = await fetch(`http://localhost:3001/api/members/${memberId}`, {
+              const response = await fetch(`http://192.168.1.65:5000/api/members/${memberId}`, {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({  // Add the required confirmationText
+                  confirmationText: 'DELETE MEMBER'
+                }),
               });
 
               if (response.ok) {
                 Alert.alert('Success', 'Member deleted successfully');
                 loadMembers();
               } else {
-                Alert.alert('Error', 'Failed to delete member');
+                const errorData = await response.json();
+                Alert.alert('Error', errorData.message || 'Failed to delete member');
               }
             } catch (error) {
               console.error('Delete member error:', error);
@@ -119,13 +129,13 @@ export default function RoleManagement() {
 
     Alert.alert(
       'Change Role',
-      `Select new role for ${member.name}:`,
+      `Select new role for ${member.personalInfo.fullName}:`,
       [
         ...options.map(role => ({
           text: role.charAt(0).toUpperCase() + role.slice(1),
           onPress: () => {
             if (role !== member.role) {
-              updateMemberRole(member.id, role);
+              updateMemberRole(member._id, role);
             }
           }
         })),
@@ -139,13 +149,13 @@ export default function RoleManagement() {
       <View style={styles.memberHeader}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {item.name.charAt(0).toUpperCase()}
+            {item.personalInfo.fullName.charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.name}</Text>
+          <Text style={styles.memberName}>{item.personalInfo.fullName}</Text>
           <Text style={styles.memberId}>ID: {item.membershipId}</Text>
-          <Text style={styles.memberEmail}>{item.email}</Text>
+          <Text style={styles.memberEmail}>{item.personalInfo.email}</Text>
         </View>
       </View>
 
@@ -174,7 +184,7 @@ export default function RoleManagement() {
           {isAdmin && (
             <TouchableOpacity
               style={styles.deleteButton}
-              onPress={() => deleteMember(item.id)}
+              onPress={() => deleteMember(item._id)}
             >
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
@@ -227,7 +237,7 @@ export default function RoleManagement() {
       <FlatList
         data={members}
         renderItem={renderMember}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item._id.toString()}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />

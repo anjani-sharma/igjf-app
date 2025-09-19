@@ -3,13 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+
+const partyFlag = require('./images/flag.jpeg');
 
 export default function WelcomeScreen() {
   const { user, loading } = useAuth();
@@ -17,12 +19,8 @@ export default function WelcomeScreen() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        // User is logged in, redirect based on role
-        if (user.role === 'admin') {
-          router.replace('/admin');
-        } else {
-          router.replace('/dashboard');
-        }
+        // Redirect all logged-in users to the main dashboard
+        router.replace('/dashboard');
       }
     }
   }, [user, loading]);
@@ -39,19 +37,30 @@ export default function WelcomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.logoSection}>
-          <Text style={styles.partyName}>POLITICAL PARTY</Text>
-          <Text style={styles.tagline}>Member Management System</Text>
+          <Text style={styles.partyName}>Hamro Darjeeling</Text>
+          <Text style={styles.tagline}>No More Fear</Text>
         </View>
       </View>
 
+      <View style={styles.imageContainer}>
+        <Image 
+          source={partyFlag} 
+          style={styles.flagImage} 
+          resizeMode="contain"
+          onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}
+          defaultSource={require('./images/flag.jpeg')}
+        />
+      </View>
+      
+
       <View style={styles.content}>
         <View style={styles.welcomeSection}>
-          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.title}>Indian Gorkha Janshakti Front</Text>
           <Text style={styles.subtitle}>
-            Manage your party membership with ease
+            Lets us work together for a better tomorrow.
           </Text>
         </View>
 
@@ -94,13 +103,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   header: {
-    paddingTop: 60,
+    paddingTop: 30,
     paddingHorizontal: 30,
     alignItems: 'center',
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   partyName: {
     fontSize: 24,
@@ -125,6 +134,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
     marginBottom: 15,
   },
   subtitle: {
@@ -159,5 +169,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  imageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    width: '100%'
+  },
+  flagImage: {
+    width: 250,
+    height: 200,
+    marginVertical: 10
   },
 });

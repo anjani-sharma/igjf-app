@@ -1,3 +1,4 @@
+// backend/routes/members.js - COMPLETE FILE
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -32,16 +33,16 @@ const upload = multer({
   }
 });
 
-// Regular routes
+// Profile routes
 router.get('/profile', auth, getProfile);
+router.put('/profile', auth, upload.single('profilePhoto'), updateProfile);
+
+// Admin routes
 router.get('/all', auth, adminAuth, getAllMembers);
 router.post('/scan', auth, adminAuth, scanQRCode);
 router.put('/role/:id', auth, adminAuth, updateMemberRole);
 
 // Delete route - ADMIN ONLY
 router.delete('/:id', auth, adminOnlyAuth, deleteMember);
-
-// New profile update route
-router.put('/profile', auth, upload.single('profilePhoto'), updateProfile);
 
 module.exports = router;
