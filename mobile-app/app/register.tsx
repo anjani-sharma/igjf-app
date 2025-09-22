@@ -17,8 +17,26 @@ import { router } from 'expo-router';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 
+interface FormDataType {
+  aadharNumber: string;
+  fullName: string;
+  fatherName: string;
+  address: string;
+  phone: string;
+  email: string;
+  dateOfBirth: string;
+  occupation: string;
+  constituency: string;
+  gender: string;
+  city: string;
+  state: string;
+  pincode: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export default function Register() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     // 🔥 FIXED: Using consistent field names that match backend
     aadharNumber: '',      // Backend expects this spelling
     fullName: '',
@@ -39,9 +57,9 @@ export default function Register() {
 
   const [aadharValidated, setAadharValidated] = useState(false);
   const [aadharLoading, setAadharLoading] = useState(false);
-  const [useAadharVerification, setUseAadharVerification] = useState(null);
+  const [useAadharVerification, setUseAadharVerification] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const [photo, setPhoto] = useState(null);
+  const [photo, setPhoto] = useState<any>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
   const [facing, setFacing] = useState<CameraType>('front');
@@ -180,7 +198,7 @@ export default function Register() {
         
         setPhoto(photo);
         setShowCamera(false);
-      } catch (error) {
+      } catch (error: any) {
         Alert.alert('Error', 'Failed to take picture: ' + error.message);
       }
     }
@@ -293,9 +311,7 @@ export default function Register() {
       const response = await fetch('http://192.168.1.65:5000/api/auth/register', {
         method: 'POST',
         body: registerFormData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        
       });
 
       const data = await response.json();
@@ -1033,5 +1049,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontWeight: '600',
+  },
+
+   aadharContainer: {
+    marginBottom: 20,
+  },
+  aadharInputContainer: {
+    position: 'relative',
+  },
+  aadharInput: {
+    paddingRight: 80,
+  },
+  aadharLoader: {
+    position: 'absolute',
+    right: 15,
+    top: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  aadharSuccess: {
+    position: 'absolute',
+    right: 15,
+    top: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  aadharNote: {
+    color: '#4CAF50',
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: -15,
+    marginBottom: 15,
+    paddingLeft: 5,
   },
 });

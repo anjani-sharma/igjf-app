@@ -36,9 +36,18 @@ export default function LoginScreen() {
 
     try {
       console.log('🔐 Starting login process...');
+
+      // 🔍 DEBUG: Log what we're sending
+      console.log('🔍 Sending credentials:', { 
+        identifier: identifier.trim(), 
+        password: '***' // Don't log actual password
+      });
       
       // Call the API using our service
-      const result = await authAPI.login(identifier.trim(), password);
+      const result = await authAPI.login({ 
+        identifier: identifier.trim(), 
+        password: password 
+      });
       
       if (result.success) {
         console.log('✅ Login successful');

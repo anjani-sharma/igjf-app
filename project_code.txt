@@ -6,6 +6,9 @@ PROJECT STRUCTURE:
 ├── .gitignore
 ├── backend
 │   ├── .env
+│   ├── .expo
+│   │   ├── README.md
+│   │   └── devices.json
 │   ├── config
 │   │   └── database.js
 │   ├── controllers
@@ -14,8 +17,6 @@ PROJECT STRUCTURE:
 │   │   ├── eventController.js
 │   │   └── memberController.js
 │   ├── database.sqlite
-│   ├── debug-events.js
-│   ├── debug-server.js
 │   ├── middleware
 │   │   └── auth.js
 │   ├── models
@@ -34,8 +35,14 @@ PROJECT STRUCTURE:
 │   ├── services
 │   │   └── emailService.js
 │   └── uploads
-│       ├── 1758129565426.jpg
-│       └── 1758131445094.jpg
+│       ├── 1758303426762.jpg
+│       ├── 1758303725935.jpg
+│       ├── 1758303866501.jpg
+│       ├── 1758354380948.jpg
+│       ├── 1758354636643.jpg
+│       ├── 1758357008390.jpg
+│       ├── 1758357026907.jpg
+│       └── 1758357065435.jpg
 ├── combine.py
 ├── mobile-app
 │   ├── .expo
@@ -47,6 +54,7 @@ PROJECT STRUCTURE:
 │   ├── app
 │   │   ├── _layout.tsx
 │   │   ├── admin.tsx
+│   │   ├── attendance-reports.tsx
 │   │   ├── attendance-scanner.tsx
 │   │   ├── create-event.tsx
 │   │   ├── dashboard.tsx
@@ -57,6 +65,7 @@ PROJECT STRUCTURE:
 │   │   ├── index.tsx
 │   │   ├── location-attendance.tsx
 │   │   ├── login.tsx
+│   │   ├── member-details.tsx
 │   │   ├── members.tsx
 │   │   ├── profile-edit.tsx
 │   │   ├── register.tsx
@@ -231,10 +240,11 @@ with open(output_file, "w", encoding="utf-8") as outfile:
     "expo-font": "~14.0.8",
     "expo-image-picker": "~17.0.8",
     "expo-linking": "~8.0.8",
-    "expo-router": "~6.0.6",
+    "expo-router": "~6.0.7",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
-    "react": "^19.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.4",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-safe-area-context": "~5.6.0",
@@ -544,7 +554,7 @@ const styles = StyleSheet.create({
   },
   welcomeSection: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 40,
   },
   title: {
     fontSize: 36,
@@ -555,7 +565,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#E0E0E0',
+    color: '#ded675',
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -589,13 +599,13 @@ const styles = StyleSheet.create({
   imageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 5,
     width: '100%'
   },
   flagImage: {
     width: 250,
-    height: 200,
-    marginVertical: 10
+    height: 150,
+    marginVertical: 5
   },
 });
 
@@ -1261,6 +1271,1016 @@ const styles = StyleSheet.create({
   },
 });
 
+# ==== ./mobile-app/app/member-details.tsx ====
+
+// Save this as: mobile-app/app/member-details.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Image,
+  Modal,
+  Share,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import QRCode from 'react-native-qrcode-svg';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+    },
+    border: '#eee',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+    info: '#2196F3',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    h5: { fontSize: 18, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    md: 8,
+    lg: 12,
+    xl: 16,
+  },
+};
+
+interface MemberData {
+  id: string;
+  membershipId: string;
+  fullName: string;
+  fatherName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  occupation: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  constituency: string;
+  gender: string;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  profilePhoto?: string;
+  qrCode?: string;
+  qrCodeData?: string;
+  aadharNumber?: string;
+  aadharVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AttendanceRecord {
+  id: string;
+  location: string;
+  attendanceType: string;
+  checkInTime: string;
+  checkOutTime?: string;
+  status: string;
+  event?: {
+    title: string;
+    eventDate: string;
+  };
+}
+
+export default function MemberDetails() {
+  const { user } = useAuth();
+  const { memberId } = useLocalSearchParams();
+  const [memberData, setMemberData] = useState<MemberData | null>(null);
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'details' | 'attendance'>('details');
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    if (memberId) {
+      loadMemberData();
+      loadAttendanceHistory();
+    }
+  }, [memberId]);
+
+  const loadMemberData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`http://192.168.1.65:5000/api/members/${memberId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMemberData(data);
+      } else {
+        Alert.alert('Error', 'Failed to load member details');
+        router.back();
+      }
+    } catch (error) {
+      console.error('Error loading member data:', error);
+      Alert.alert('Error', 'Failed to load member details');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAttendanceHistory = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(
+        `http://192.168.1.65:5000/api/events/attendance/records?userId=${memberId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAttendanceHistory(data.attendances || []);
+      }
+    } catch (error) {
+      console.error('Error loading attendance history:', error);
+    }
+  };
+
+  const handleChangeRole = () => {
+    if (!memberData) return;
+
+    const roles = ['member', 'organizer', 'admin'];
+    const currentRoleIndex = roles.indexOf(memberData.role);
+    const roleOptions = roles.map((role, index) => ({
+      text: role.charAt(0).toUpperCase() + role.slice(1),
+      onPress: () => updateMemberRole(role),
+      style: index === currentRoleIndex ? 'cancel' : 'default',
+    }));
+
+    Alert.alert(
+      'Change Role',
+      `Current role: ${memberData.role.toUpperCase()}\nSelect new role:`,
+      [
+        ...roleOptions,
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const updateMemberRole = async (newRole: string) => {
+    if (!memberData) return;
+
+    setActionLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(
+        `http://192.168.1.65:5000/api/members/${memberData.id}/role`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
+
+      if (response.ok) {
+        setMemberData({ ...memberData, role: newRole });
+        Alert.alert('Success', `Role updated to ${newRole}`);
+      } else {
+        Alert.alert('Error', 'Failed to update role');
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+      Alert.alert('Error', 'Failed to update role');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!memberData) return;
+
+    const newStatus = !memberData.isActive;
+    const action = newStatus ? 'activate' : 'deactivate';
+
+    Alert.alert(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} Member`,
+      `Are you sure you want to ${action} ${memberData.fullName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: action.charAt(0).toUpperCase() + action.slice(1),
+          style: newStatus ? 'default' : 'destructive',
+          onPress: () => updateMemberStatus(newStatus),
+        },
+      ]
+    );
+  };
+
+  const updateMemberStatus = async (isActive: boolean) => {
+    if (!memberData) return;
+
+    setActionLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(
+        `http://192.168.1.65:5000/api/members/${memberData.id}/status`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ isActive }),
+        }
+      );
+
+      if (response.ok) {
+        setMemberData({ ...memberData, isActive });
+        Alert.alert('Success', `Member ${isActive ? 'activated' : 'deactivated'}`);
+      } else {
+        Alert.alert('Error', 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      Alert.alert('Error', 'Failed to update status');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleShareMemberInfo = async () => {
+    if (!memberData) return;
+
+    try {
+      const shareContent = `
+🆔 Member Information
+━━━━━━━━━━━━━━━━━━
+👤 Name: ${memberData.fullName}
+🎫 ID: ${memberData.membershipId}
+📧 Email: ${memberData.email}
+📱 Phone: ${memberData.phone}
+🎭 Role: ${memberData.role.toUpperCase()}
+✅ Status: ${memberData.isActive ? 'Active' : 'Inactive'}
+📍 Constituency: ${memberData.constituency}
+
+Generated by Gorkha Janshakti Front App
+      `.trim();
+
+      await Share.share({
+        message: shareContent,
+        title: 'Member Information',
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return Theme.colors.error;
+      case 'organizer':
+        return Theme.colors.info;
+      default:
+        return Theme.colors.success;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'present':
+        return Theme.colors.success;
+      case 'late':
+        return Theme.colors.warning;
+      case 'early_departure':
+        return Theme.colors.info;
+      default:
+        return Theme.colors.text.secondary;
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Member Details</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading member details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!memberData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Member Not Found</Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Member details not found</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Member Details</Text>
+        <TouchableOpacity style={styles.shareButton} onPress={handleShareMemberInfo}>
+          <Text style={styles.shareButtonText}>Share</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Member Header Card */}
+      <View style={styles.memberHeader}>
+        <View style={styles.memberInfo}>
+          {memberData.profilePhoto ? (
+            <Image 
+              source={{ uri: `http://192.168.1.65:5000/${memberData.profilePhoto}` }} 
+              style={styles.profilePhoto}
+            />
+          ) : (
+            <View style={styles.defaultPhoto}>
+              <Text style={styles.photoInitial}>
+                {memberData.fullName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          
+          <View style={styles.memberBasicInfo}>
+            <Text style={styles.memberName}>{memberData.fullName}</Text>
+            <Text style={styles.membershipId}>ID: {memberData.membershipId}</Text>
+            
+            <View style={styles.badgeContainer}>
+              <View style={[styles.roleBadge, { backgroundColor: getRoleColor(memberData.role) }]}>
+                <Text style={styles.badgeText}>{memberData.role.toUpperCase()}</Text>
+              </View>
+              <View style={[
+                styles.statusBadge, 
+                { backgroundColor: memberData.isActive ? Theme.colors.success : Theme.colors.error }
+              ]}>
+                <Text style={styles.badgeText}>
+                  {memberData.isActive ? 'ACTIVE' : 'INACTIVE'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.qrButton}
+          onPress={() => setShowQRModal(true)}
+        >
+          <Text style={styles.qrButtonText}>📱 QR</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'details' && styles.activeTab]}
+          onPress={() => setActiveTab('details')}
+        >
+          <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>
+            👤 Details
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'attendance' && styles.activeTab]}
+          onPress={() => setActiveTab('attendance')}
+        >
+          <Text style={[styles.tabText, activeTab === 'attendance' && styles.activeTabText]}>
+            📊 Attendance ({attendanceHistory.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      <ScrollView style={styles.content}>
+        {activeTab === 'details' ? (
+          <View style={styles.detailsContent}>
+            {/* Personal Information */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>👤 Personal Information</Text>
+              <View style={styles.detailCard}>
+                <DetailRow label="Full Name" value={memberData.fullName} />
+                <DetailRow label="Father's Name" value={memberData.fatherName} />
+                <DetailRow label="Date of Birth" value={formatDate(memberData.dateOfBirth)} />
+                <DetailRow label="Gender" value={memberData.gender || 'Not specified'} />
+                <DetailRow label="Occupation" value={memberData.occupation || 'Not specified'} />
+              </View>
+            </View>
+
+            {/* Contact Information */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📞 Contact Information</Text>
+              <View style={styles.detailCard}>
+                <DetailRow label="Email" value={memberData.email} />
+                <DetailRow label="Phone" value={memberData.phone} />
+                <DetailRow label="Address" value={memberData.address} />
+                <DetailRow label="City" value={memberData.city || 'Not specified'} />
+                <DetailRow label="State" value={memberData.state || 'Not specified'} />
+                <DetailRow label="Pincode" value={memberData.pincode || 'Not specified'} />
+                <DetailRow label="Constituency" value={memberData.constituency || 'Not specified'} />
+              </View>
+            </View>
+
+            {/* Verification Status */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>✅ Verification Status</Text>
+              <View style={styles.detailCard}>
+                <DetailRow 
+                  label="Account Verified" 
+                  value={memberData.isVerified ? 'Yes' : 'No'}
+                  valueColor={memberData.isVerified ? Theme.colors.success : Theme.colors.warning}
+                />
+                <DetailRow 
+                  label="Aadhar Verified" 
+                  value={memberData.aadharVerified ? 'Yes' : 'No'}
+                  valueColor={memberData.aadharVerified ? Theme.colors.success : Theme.colors.warning}
+                />
+                {memberData.aadharNumber && (
+                  <DetailRow 
+                    label="Aadhar Number" 
+                    value={`****-****-${memberData.aadharNumber.slice(-4)}`} 
+                  />
+                )}
+              </View>
+            </View>
+
+            {/* Account Information */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📅 Account Information</Text>
+              <View style={styles.detailCard}>
+                <DetailRow label="Member Since" value={formatDate(memberData.createdAt)} />
+                <DetailRow label="Last Updated" value={formatDate(memberData.updatedAt)} />
+                <DetailRow label="Account Status" value={memberData.isActive ? 'Active' : 'Inactive'} />
+              </View>
+            </View>
+
+            {/* Admin Actions */}
+            {user?.role === 'admin' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>⚙️ Admin Actions</Text>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.roleButton]}
+                    onPress={handleChangeRole}
+                    disabled={actionLoading}
+                  >
+                    <Text style={styles.actionButtonText}>
+                      {actionLoading ? 'Updating...' : 'Change Role'}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton, 
+                      memberData.isActive ? styles.deactivateButton : styles.activateButton
+                    ]}
+                    onPress={handleToggleStatus}
+                    disabled={actionLoading}
+                  >
+                    <Text style={styles.actionButtonText}>
+                      {actionLoading ? 'Updating...' : memberData.isActive ? 'Deactivate' : 'Activate'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        ) : (
+          <View style={styles.attendanceContent}>
+            {attendanceHistory.length > 0 ? (
+              attendanceHistory.map((record, index) => (
+                <View key={record.id} style={styles.attendanceCard}>
+                  <View style={styles.attendanceHeader}>
+                    <View style={styles.attendanceType}>
+                      <Text style={styles.typeIcon}>
+                        {record.attendanceType === 'event' ? '🎯' : '📍'}
+                      </Text>
+                      <Text style={styles.typeText}>
+                        {record.attendanceType === 'event' ? 'Event' : 'Location Visit'}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.attendanceStatus,
+                      { backgroundColor: getStatusColor(record.status) }
+                    ]}>
+                      <Text style={styles.statusText}>{record.status.toUpperCase()}</Text>
+                    </View>
+                  </View>
+
+                  {record.event && (
+                    <Text style={styles.eventTitle}>{record.event.title}</Text>
+                  )}
+                  
+                  <Text style={styles.attendanceLocation}>📍 {record.location}</Text>
+                  <Text style={styles.attendanceTime}>
+                    ⏰ Check-in: {formatDateTime(record.checkInTime)}
+                  </Text>
+                  
+                  {record.checkOutTime && (
+                    <Text style={styles.attendanceTime}>
+                      ⏰ Check-out: {formatDateTime(record.checkOutTime)}
+                    </Text>
+                  )}
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyAttendance}>
+                <Text style={styles.emptyText}>📝 No attendance records found</Text>
+                <Text style={styles.emptySubtext}>
+                  This member hasn't checked in to any events or locations yet
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQRModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowQRModal(false)}
+      >
+        <SafeAreaView style={styles.qrModalContainer}>
+          <View style={styles.qrModalHeader}>
+            <TouchableOpacity onPress={() => setShowQRModal(false)}>
+              <Text style={styles.qrModalClose}>✕ Close</Text>
+            </TouchableOpacity>
+            <Text style={styles.qrModalTitle}>Member QR Code</Text>
+            <View style={styles.placeholder} />
+          </View>
+          
+          <View style={styles.qrModalContent}>
+            <View style={styles.qrContainer}>
+              {memberData.qrCodeData && (
+                <QRCode
+                  value={memberData.qrCodeData}
+                  size={250}
+                  backgroundColor="white"
+                  color="black"
+                />
+              )}
+            </View>
+            
+            <View style={styles.qrInfo}>
+              <Text style={styles.qrMemberName}>{memberData.fullName}</Text>
+              <Text style={styles.qrMemberId}>ID: {memberData.membershipId}</Text>
+              <Text style={styles.qrInstructions}>
+                Scan this QR code to mark attendance or verify member identity
+              </Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+// Helper component for detail rows
+const DetailRow = ({ 
+  label, 
+  value, 
+  valueColor = Theme.colors.text.primary 
+}: { 
+  label: string; 
+  value: string; 
+  valueColor?: string;
+}) => (
+  <View style={styles.detailRow}>
+    <Text style={styles.detailLabel}>{label}</Text>
+    <Text style={[styles.detailValue, { color: valueColor }]}>{value}</Text>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
+    backgroundColor: Theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  backButton: {
+    paddingRight: Theme.spacing.md,
+  },
+  backButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  title: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    flex: 1,
+  },
+  shareButton: {
+    paddingLeft: Theme.spacing.md,
+  },
+  shareButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    marginTop: Theme.spacing.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    ...Theme.typography.h5,
+    color: Theme.colors.error,
+  },
+  memberHeader: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  memberInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profilePhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: Theme.spacing.md,
+  },
+  defaultPhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Theme.spacing.md,
+  },
+  photoInitial: {
+    ...Theme.typography.h3,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: 'bold',
+  },
+  memberBasicInfo: {
+    flex: 1,
+  },
+  memberName: {
+    ...Theme.typography.h5,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.xs,
+  },
+  membershipId: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    marginBottom: Theme.spacing.sm,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    gap: Theme.spacing.sm,
+  },
+  roleBadge: {
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.md,
+  },
+  statusBadge: {
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.md,
+  },
+  badgeText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  qrButton: {
+    backgroundColor: Theme.colors.secondary,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.md,
+  },
+  qrButtonText: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: Theme.spacing.md,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: Theme.colors.primary,
+  },
+  tabText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+  },
+  detailsContent: {
+    padding: Theme.spacing.md,
+  },
+  section: {
+    marginBottom: Theme.spacing.lg,
+  },
+  sectionTitle: {
+    ...Theme.typography.h5,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  detailCard: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: Theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  detailLabel: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+    flex: 1,
+  },
+  detailValue: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    fontWeight: '400',
+    flex: 1,
+    textAlign: 'right',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: Theme.spacing.md,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  roleButton: {
+    backgroundColor: Theme.colors.info,
+  },
+  activateButton: {
+    backgroundColor: Theme.colors.success,
+  },
+  deactivateButton: {
+    backgroundColor: Theme.colors.warning,
+  },
+  actionButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  attendanceContent: {
+    padding: Theme.spacing.md,
+  },
+  attendanceCard: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.md,
+    marginBottom: Theme.spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  attendanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Theme.spacing.sm,
+  },
+  attendanceType: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typeIcon: {
+    fontSize: 16,
+    marginRight: Theme.spacing.xs,
+  },
+  typeText: {
+    ...Theme.typography.body2,
+    fontWeight: '600',
+    color: Theme.colors.text.primary,
+  },
+  attendanceStatus: {
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.md,
+  },
+  eventTitle: {
+    ...Theme.typography.body1,
+    fontWeight: '600',
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.xs,
+  },
+  attendanceLocation: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    marginBottom: Theme.spacing.xs,
+  },
+  attendanceTime: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+  },
+  emptyAttendance: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.xl,
+  },
+  emptyText: {
+    ...Theme.typography.h5,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.sm,
+  },
+  emptySubtext: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  qrModalContainer: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  qrModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
+    backgroundColor: Theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  qrModalClose: {
+    ...Theme.typography.body1,
+    color: Theme.colors.error,
+    fontWeight: '600',
+  },
+  qrModalTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+  },
+  placeholder: {
+    width: 60,
+  },
+  qrModalContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Theme.spacing.xl,
+  },
+  qrContainer: {
+    backgroundColor: Theme.colors.surface,
+    padding: Theme.spacing.xl,
+    borderRadius: Theme.borderRadius.xl,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    marginBottom: Theme.spacing.xl,
+  },
+  qrInfo: {
+    alignItems: 'center',
+  },
+  qrMemberName: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.sm,
+  },
+  qrMemberId: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.md,
+  },
+  qrInstructions: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    maxWidth: 300,
+  },
+});
+
 # ==== ./mobile-app/app/login.tsx ====
 
 // mobile-app/app/login.tsx - COMPLETE FILE
@@ -1303,7 +2323,10 @@ export default function LoginScreen() {
       console.log('🔐 Starting login process...');
       
       // Call the API using our service
-      const result = await authAPI.login(identifier.trim(), password);
+      const result = await authAPI.login({ 
+        identifier: identifier.trim(), 
+        password: password 
+      });
       
       if (result.success) {
         console.log('✅ Login successful');
@@ -1423,7 +2446,7 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   backButton: {
     marginBottom: 20,
@@ -1437,9 +2460,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   partyName: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'green',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -1463,8 +2486,8 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 20, // reduced from 40 to accommodate the image
+    paddingHorizontal: 20,
+    paddingTop: 40, // reduced from 40 to accommodate the image
   },
   
   input: {
@@ -4828,8 +5851,616 @@ const styles = StyleSheet.create({
   },
 });
 
+# ==== ./mobile-app/app/attendance-reports.tsx ====
+
+// Save this as: mobile-app/app/attendance-reports.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const Theme = {
+  colors: {
+    primary: '#1B2951',
+    secondary: '#2D5016',
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      onPrimary: '#ffffff',
+    },
+    border: '#eee',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h3: { fontSize: 24, fontWeight: 'bold' as const },
+    h4: { fontSize: 20, fontWeight: 'bold' as const },
+    body1: { fontSize: 16, fontWeight: 'normal' as const },
+    body2: { fontSize: 14, fontWeight: 'normal' as const },
+    caption: { fontSize: 12, fontWeight: 'normal' as const },
+  },
+  borderRadius: {
+    md: 8,
+    lg: 12,
+  },
+};
+
+interface AttendanceRecord {
+  id: string;
+  user: {
+    fullName: string;
+    membershipId: string;
+    email: string;
+    role: string;
+  };
+  event?: {
+    title: string;
+    eventDate: string;
+    location: string;
+  };
+  location: string;
+  attendanceType: 'event' | 'location_visit';
+  checkInTime: string;
+  checkOutTime?: string;
+  status: 'present' | 'late' | 'early_departure';
+  notes?: string;
+  marker: {
+    fullName: string;
+    role: string;
+  };
+}
+
+interface AttendanceStats {
+  totalAttendance: number;
+  attendanceByLocation: Array<{ location: string; count: number }>;
+  attendanceByType: Array<{ attendanceType: string; count: number }>;
+  topAttendees: Array<{
+    user: {
+      fullName: string;
+      membershipId: string;
+      role: string;
+    };
+    attendanceCount: number;
+  }>;
+}
+
+export default function AttendanceReports() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'records' | 'stats'>('records');
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadAttendanceData();
+  }, [activeTab]);
+
+  const loadAttendanceData = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      
+      if (activeTab === 'records') {
+        await loadAttendanceRecords(token);
+      } else {
+        await loadAttendanceStats(token);
+      }
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+      Alert.alert('Error', 'Failed to load attendance data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAttendanceRecords = async (token: string | null) => {
+    const response = await fetch('http://192.168.1.65:5000/api/events/attendance/records', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setAttendanceRecords(data.attendances || []);
+    } else {
+      throw new Error('Failed to fetch attendance records');
+    }
+  };
+
+  const loadAttendanceStats = async (token: string | null) => {
+    const response = await fetch('http://192.168.1.65:5000/api/events/attendance/stats', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setAttendanceStats(data.stats);
+    } else {
+      throw new Error('Failed to fetch attendance stats');
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadAttendanceData();
+    setRefreshing(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'present':
+        return Theme.colors.success;
+      case 'late':
+        return Theme.colors.warning;
+      case 'early_departure':
+        return '#2196F3';
+      default:
+        return Theme.colors.text.secondary;
+    }
+  };
+
+  const renderAttendanceRecord = ({ item }: { item: AttendanceRecord }) => (
+    <View style={styles.recordCard}>
+      <View style={styles.recordHeader}>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{item.user.fullName}</Text>
+          <Text style={styles.userDetails}>
+            {item.user.membershipId} • {item.user.role}
+          </Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+          <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+        </View>
+      </View>
+
+      <View style={styles.recordDetails}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Type:</Text>
+          <Text style={styles.detailValue}>
+            {item.attendanceType === 'event' ? '🎯 Event' : '📍 Location Visit'}
+          </Text>
+        </View>
+
+        {item.event && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Event:</Text>
+            <Text style={styles.detailValue}>{item.event.title}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Location:</Text>
+          <Text style={styles.detailValue}>{item.location}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Check-in:</Text>
+          <Text style={styles.detailValue}>{formatDate(item.checkInTime)}</Text>
+        </View>
+
+        {item.checkOutTime && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Check-out:</Text>
+            <Text style={styles.detailValue}>{formatDate(item.checkOutTime)}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Marked by:</Text>
+          <Text style={styles.detailValue}>{item.marker.fullName} ({item.marker.role})</Text>
+        </View>
+
+        {item.notes && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Notes:</Text>
+            <Text style={styles.detailValue}>{item.notes}</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderStatsSection = () => {
+    if (!attendanceStats) return null;
+
+    return (
+      <ScrollView 
+        style={styles.statsContainer}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {/* Total Stats */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>📊 Overall Statistics</Text>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Total Attendance Records:</Text>
+            <Text style={styles.statValue}>{attendanceStats.totalAttendance}</Text>
+          </View>
+        </View>
+
+        {/* Attendance by Type */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>📈 Attendance by Type</Text>
+          {attendanceStats.attendanceByType.map((item, index) => (
+            <View key={index} style={styles.statItem}>
+              <Text style={styles.statLabel}>
+                {item.attendanceType === 'event' ? '🎯 Events:' : '📍 Location Visits:'}
+              </Text>
+              <Text style={styles.statValue}>{item.count}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Attendance by Location */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>📍 Attendance by Location</Text>
+          {attendanceStats.attendanceByLocation.slice(0, 5).map((item, index) => (
+            <View key={index} style={styles.statItem}>
+              <Text style={styles.statLabel}>{item.location}:</Text>
+              <Text style={styles.statValue}>{item.count}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Top Attendees */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>🏆 Top Attendees</Text>
+          {attendanceStats.topAttendees.slice(0, 10).map((item, index) => (
+            <View key={index} style={styles.attendeeItem}>
+              <View style={styles.attendeeRank}>
+                <Text style={styles.rankText}>{index + 1}</Text>
+              </View>
+              <View style={styles.attendeeInfo}>
+                <Text style={styles.attendeeName}>{item.user.fullName}</Text>
+                <Text style={styles.attendeeDetails}>
+                  {item.user.membershipId} • {item.user.role}
+                </Text>
+              </View>
+              <View style={styles.attendeeCount}>
+                <Text style={styles.countText}>{item.attendanceCount}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Attendance Reports</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading attendance data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Attendance Reports</Text>
+      </View>
+
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'records' && styles.activeTab]}
+          onPress={() => setActiveTab('records')}
+        >
+          <Text style={[styles.tabText, activeTab === 'records' && styles.activeTabText]}>
+            📋 Records
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'stats' && styles.activeTab]}
+          onPress={() => setActiveTab('stats')}
+        >
+          <Text style={[styles.tabText, activeTab === 'stats' && styles.activeTabText]}>
+            📊 Statistics
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      {activeTab === 'records' ? (
+        <FlatList
+          data={attendanceRecords}
+          renderItem={renderAttendanceRecord}
+          keyExtractor={(item) => item.id}
+          style={styles.recordsList}
+          contentContainerStyle={styles.recordsContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>📝 No attendance records found</Text>
+              <Text style={styles.emptySubtext}>
+                Attendance will appear here once members start checking in
+              </Text>
+            </View>
+          }
+        />
+      ) : (
+        renderStatsSection()
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
+    backgroundColor: Theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  backButton: {
+    paddingRight: Theme.spacing.md,
+  },
+  backButtonText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  title: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    flex: 1,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: Theme.spacing.md,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: Theme.colors.primary,
+  },
+  tabText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: Theme.colors.primary,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    marginTop: Theme.spacing.md,
+  },
+  recordsList: {
+    flex: 1,
+  },
+  recordsContent: {
+    padding: Theme.spacing.md,
+  },
+  recordCard: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.md,
+    marginBottom: Theme.spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  recordHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Theme.spacing.sm,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    ...Theme.typography.body1,
+    fontWeight: '600',
+    color: Theme.colors.text.primary,
+  },
+  userDetails: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.md,
+  },
+  statusText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  recordDetails: {
+    borderTopWidth: 1,
+    borderTopColor: Theme.colors.border,
+    paddingTop: Theme.spacing.sm,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: Theme.spacing.xs,
+  },
+  detailLabel: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.secondary,
+    fontWeight: '500',
+    flex: 1,
+  },
+  detailValue: {
+    ...Theme.typography.body2,
+    color: Theme.colors.text.primary,
+    fontWeight: '400',
+    flex: 2,
+    textAlign: 'right',
+  },
+  statsContainer: {
+    flex: 1,
+    padding: Theme.spacing.md,
+  },
+  statsCard: {
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.md,
+    marginBottom: Theme.spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  statsTitle: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.primary,
+    marginBottom: Theme.spacing.md,
+  },
+  statItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: Theme.spacing.xs,
+  },
+  statLabel: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+  },
+  statValue: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.primary,
+    fontWeight: '600',
+  },
+  attendeeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  attendeeRank: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Theme.spacing.md,
+  },
+  rankText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  attendeeInfo: {
+    flex: 1,
+  },
+  attendeeName: {
+    ...Theme.typography.body1,
+    fontWeight: '600',
+    color: Theme.colors.text.primary,
+  },
+  attendeeDetails: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.secondary,
+  },
+  attendeeCount: {
+    backgroundColor: Theme.colors.secondary,
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.md,
+  },
+  countText: {
+    ...Theme.typography.caption,
+    color: Theme.colors.text.onPrimary,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.xl,
+  },
+  emptyText: {
+    ...Theme.typography.h4,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: Theme.spacing.sm,
+  },
+  emptySubtext: {
+    ...Theme.typography.body1,
+    color: Theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+});
+
 # ==== ./mobile-app/app/members.tsx ====
 
+// Enhanced version of your mobile-app/app/members.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -4839,15 +6470,22 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Members() {
+  const { user } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Check if current user can view member details
+  const canViewDetails = user?.role === 'admin' || user?.role === 'organizer';
 
   useEffect(() => {
     loadMembers();
@@ -4877,41 +6515,107 @@ export default function Members() {
     }
   };
 
-  const renderMember = ({ item }) => (
-    <View style={styles.memberCard}>
-      <View style={styles.memberHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {item.personalInfo.fullName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.personalInfo.fullName}</Text>
-          <Text style={styles.memberId}>ID: {item.membershipId}</Text>
-          <Text style={styles.memberEmail}>{item.personalInfo.email}</Text>
-        </View>
-      </View>
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadMembers();
+    setRefreshing(false);
+  };
 
-      <View style={styles.memberMeta}>
-        <View style={styles.roleContainer}>
-          <Text style={[
-            styles.memberRole,
-            { 
-              backgroundColor: item.role === 'admin' ? '#FF5722' : 
-                              item.role === 'organizer' ? '#2196F3' : '#4CAF50',
-              color: 'white'
-            }
-          ]}>
-            {item.role?.toUpperCase() || 'MEMBER'}
-          </Text>
+  const handleMemberPress = (member) => {
+    if (canViewDetails) {
+      // Navigate to member details with member ID
+      router.push(`/member-details?memberId=${member.id || member._id}`);
+    } else {
+      Alert.alert(
+        'Access Restricted', 
+        'Only admins and organizers can view detailed member information'
+      );
+    }
+  };
+
+  const renderMember = ({ item }) => {
+    // Handle different data structures
+    const memberData = {
+      id: item.id || item._id,
+      fullName: item.personalInfo?.fullName || item.fullName || item.name,
+      email: item.personalInfo?.email || item.email,
+      membershipId: item.membershipId,
+      role: item.role,
+      createdAt: item.createdAt,
+      isActive: item.isActive !== undefined ? item.isActive : true,
+      isVerified: item.isVerified !== undefined ? item.isVerified : false,
+    };
+
+    return (
+      <TouchableOpacity 
+        style={[
+          styles.memberCard,
+          canViewDetails && styles.memberCardClickable
+        ]}
+        onPress={() => handleMemberPress(item)}
+        disabled={!canViewDetails}
+        activeOpacity={canViewDetails ? 0.7 : 1}
+      >
+        <View style={styles.memberHeader}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {memberData.fullName?.charAt(0).toUpperCase() || '?'}
+            </Text>
+          </View>
+          <View style={styles.memberInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.memberName}>{memberData.fullName}</Text>
+              {canViewDetails && (
+                <Text style={styles.detailsHint}>👁️</Text>
+              )}
+            </View>
+            <Text style={styles.memberId}>ID: {memberData.membershipId}</Text>
+            <Text style={styles.memberEmail}>{memberData.email}</Text>
+          </View>
         </View>
-        <Text style={styles.joinDate}>
-          Joined {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-    </View>
-  );
-   
+
+        <View style={styles.memberMeta}>
+          <View style={styles.roleContainer}>
+            <Text style={[
+              styles.memberRole,
+              { 
+                backgroundColor: memberData.role === 'admin' ? '#FF5722' : 
+                                memberData.role === 'organizer' ? '#2196F3' : '#4CAF50',
+                color: 'white'
+              }
+            ]}>
+              {memberData.role?.toUpperCase() || 'MEMBER'}
+            </Text>
+          </View>
+          
+          <View style={styles.statusContainer}>
+            {/* Status indicators */}
+            <View style={styles.statusIndicators}>
+              {memberData.isActive && (
+                <View style={styles.activeIndicator}>
+                  <Text style={styles.indicatorText}>●</Text>
+                </View>
+              )}
+              {memberData.isVerified && (
+                <Text style={styles.verifiedBadge}>✓</Text>
+              )}
+            </View>
+            
+            <Text style={styles.joinDate}>
+              Joined {new Date(memberData.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+
+        {/* Show a hint for clickable cards */}
+        {canViewDetails && (
+          <View style={styles.clickHint}>
+            <Text style={styles.clickHintText}>Tap to view details →</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -4948,14 +6652,35 @@ export default function Members() {
         <Text style={styles.memberCount}>
           {members.length} Total Members
         </Text>
+        {canViewDetails && (
+          <Text style={styles.accessInfo}>
+            💡 Tap any member to view details
+          </Text>
+        )}
       </View>
 
       <FlatList
         data={members}
         renderItem={renderMember}
-        keyExtractor={(item) => item.id?.toString() || item._id?.toString()}
+        keyExtractor={(item) => (item.id?.toString() || item._id?.toString())}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#2D5016']}
+            tintColor="#2D5016"
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>👥 No members found</Text>
+            <Text style={styles.emptySubtext}>
+              Members will appear here once they register
+            </Text>
+          </View>
+        }
       />
 
       <StatusBar style="light" />
@@ -5005,8 +6730,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
+  accessInfo: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
   listContainer: {
     paddingVertical: 10,
+    flexGrow: 1,
   },
   memberCard: {
     backgroundColor: 'white',
@@ -5019,6 +6751,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  memberCardClickable: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    shadowOpacity: 0.15,
+    elevation: 4,
   },
   memberHeader: {
     flexDirection: 'row',
@@ -5042,11 +6780,22 @@ const styles = StyleSheet.create({
   memberInfo: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   memberName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 2,
+    flex: 1,
+  },
+  detailsHint: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 8,
   },
   memberId: {
     fontSize: 14,
@@ -5076,9 +6825,59 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
   },
+  statusContainer: {
+    alignItems: 'flex-end',
+  },
+  statusIndicators: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  activeIndicator: {
+    marginRight: 6,
+  },
+  indicatorText: {
+    fontSize: 12,
+    color: '#4CAF50',
+  },
+  verifiedBadge: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
   joinDate: {
     fontSize: 12,
     color: '#999',
+  },
+  clickHint: {
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginTop: 10,
+    alignSelf: 'flex-end',
+  },
+  clickHintText: {
+    fontSize: 12,
+    color: '#6c757d',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#666',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
   },
 });
 
@@ -5653,6 +7452,10 @@ export default function RootLayout() {
         <Stack.Screen name="event-detail" />
         <Stack.Screen name="attendance-scanner" />
         <Stack.Screen name="location-attendance" />
+        
+        {/* NEW: Attendance Reports screen */}
+        <Stack.Screen name="attendance-reports" />
+        <Stack.Screen name="member-details" />
       </Stack>
     </AuthProvider>
   );
@@ -7909,6 +9712,7 @@ const styles = StyleSheet.create({
 
 # ==== ./mobile-app/app/admin.tsx ====
 
+// Replace your mobile-app/app/admin.tsx with this updated version
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -7929,6 +9733,7 @@ export default function AdminDashboard() {
     totalMembers: 0,
     newMembersThisWeek: 0,
     activeMembers: 0,
+    totalAttendance: 0,
   });
 
   useEffect(() => {
@@ -7941,6 +9746,7 @@ export default function AdminDashboard() {
       totalMembers: 156,
       newMembersThisWeek: 12,
       activeMembers: 142,
+      totalAttendance: 89,
     });
   };
 
@@ -7950,39 +9756,29 @@ export default function AdminDashboard() {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          onPress: async () => {
-            await logout();
-            router.replace('/');
-          }
-        },
+        { text: 'Logout', onPress: logout },
       ]
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style="light" backgroundColor="#1B2951" />
+      
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.roleText}>{user?.role?.toUpperCase()}</Text>
-            <Text style={styles.nameText}>{user?.name}</Text>
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>
+              Welcome, {user?.fullName || user?.name}
+            </Text>
+            <Text style={styles.welcomeSubtitle}>
+              {user?.role === 'admin' ? 'Admin Control Panel' : 'Organizer Dashboard'}
+            </Text>
+            <Text style={styles.welcomeDescription}>
+              Manage party membership and activities
+            </Text>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Welcome Card */}
-        <View style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>
-            {user?.role === 'admin' ? 'Admin Control Panel' : 'Organizer Dashboard'}
-          </Text>
-          <Text style={styles.welcomeSubtitle}>
-            Manage party membership and activities
-          </Text>
         </View>
 
         {/* Stats Cards */}
@@ -7999,9 +9795,13 @@ export default function AdminDashboard() {
             <Text style={styles.statNumber}>{stats.activeMembers}</Text>
             <Text style={styles.statLabel}>Active Members</Text>
           </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats.totalAttendance}</Text>
+            <Text style={styles.statLabel}>Total Attendance</Text>
+          </View>
         </View>
 
-        {/* Action Buttons */}
+        {/* Member Management Section */}
         <View style={styles.actionSection}>
           <Text style={styles.sectionTitle}>Member Management</Text>
           
@@ -8009,23 +9809,88 @@ export default function AdminDashboard() {
             style={styles.primaryAction}
             onPress={() => router.push('/scanner')}
           >
-            <Text style={styles.primaryActionText}>📱 Scan Member QR Code</Text>
-            <Text style={styles.actionSubtext}>Verify member identity</Text>
+            <Text style={styles.actionIcon}>📱</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>Scan Member QR Code</Text>
+              <Text style={styles.actionSubtext}>Verify member identity</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.primaryAction}
             onPress={() => router.push('/members')}
           >
-            <Text style={styles.primaryActionText}>👥 View All Members</Text>
-            <Text style={styles.actionSubtext}>Browse member directory</Text>
+            <Text style={styles.actionIcon}>👥</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>View All Members</Text>
+              <Text style={styles.actionSubtext}>Browse member directory</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.secondaryAction}
             onPress={() => router.push('/register')}
           >
-            <Text style={styles.secondaryActionText}>➕ Register New Member</Text>
+            <Text style={styles.actionIcon}>➕</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.secondaryActionText}>Register New Member</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Events & Attendance Section */}
+        <View style={styles.actionSection}>
+          <Text style={styles.sectionTitle}>Events & Attendance</Text>
+          
+          <TouchableOpacity
+            style={styles.primaryAction}
+            onPress={() => router.push('/events')}
+          >
+            <Text style={styles.actionIcon}>📅</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>Manage Events</Text>
+              <Text style={styles.actionSubtext}>Create and view events</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.primaryAction}
+            onPress={() => router.push('/attendance-scanner')}
+          >
+            <Text style={styles.actionIcon}>📝</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>Mark Attendance</Text>
+              <Text style={styles.actionSubtext}>Scan QR codes for attendance</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          {/* NEW: Attendance Reports Button */}
+          <TouchableOpacity
+            style={styles.highlightAction}
+            onPress={() => router.push('/attendance-reports')}
+          >
+            <Text style={styles.actionIcon}>📊</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.highlightActionText}>Attendance Reports</Text>
+              <Text style={styles.actionSubtext}>View attendance statistics and records</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryAction}
+            onPress={() => router.push('/location-attendance')}
+          >
+            <Text style={styles.actionIcon}>📍</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.secondaryActionText}>Location Attendance</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
           </TouchableOpacity>
         </View>
 
@@ -8038,22 +9903,54 @@ export default function AdminDashboard() {
               style={styles.adminAction}
               onPress={() => router.push('/roles')}
             >
-              <Text style={styles.adminActionText}>⚙️ Manage Roles</Text>
-              <Text style={styles.actionSubtext}>Assign organizer permissions</Text>
+              <Text style={styles.actionIcon}>⚙️</Text>
+              <View style={styles.actionContent}>
+                <Text style={styles.adminActionText}>Manage Roles</Text>
+                <Text style={styles.actionSubtext}>Assign organizer permissions</Text>
+              </View>
+              <Text style={styles.actionArrow}>→</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.adminAction}
               onPress={() => Alert.alert('Feature', 'Export functionality coming soon!')}
             >
-              <Text style={styles.adminActionText}>📊 Export Data</Text>
-              <Text style={styles.actionSubtext}>Download member reports</Text>
+              <Text style={styles.actionIcon}>📤</Text>
+              <View style={styles.actionContent}>
+                <Text style={styles.adminActionText}>Export Data</Text>
+                <Text style={styles.actionSubtext}>Download member reports</Text>
+              </View>
+              <Text style={styles.actionArrow}>→</Text>
             </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
 
-      <StatusBar style="light" />
+        {/* Account Section */}
+        <View style={styles.actionSection}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          
+          <TouchableOpacity
+            style={styles.secondaryAction}
+            onPress={() => router.push('/profile-edit')}
+          >
+            <Text style={styles.actionIcon}>✏️</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.secondaryActionText}>Edit Profile</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.actionIcon}>🚪</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -8068,144 +9965,174 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#1B2951',
-    paddingVertical: 20,
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingVertical: 30,
+    paddingTop: 40,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  roleText: {
-    color: '#4CAF50',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  nameText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  logoutButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'white',
-  },
-  logoutText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  welcomeCard: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B2951',
+  welcomeSection: {
     marginBottom: 10,
   },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 5,
+  },
   welcomeSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    fontSize: 18,
+    color: '#E0E0E0',
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  welcomeDescription: {
+    fontSize: 14,
+    color: '#B0B0B0',
   },
   statsContainer: {
     flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    gap: 10,
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    gap: 15,
   },
   statCard: {
-    flex: 1,
     backgroundColor: 'white',
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    borderRadius: 15,
+    padding: 20,
+    borderRadius: 12,
+    flex: 1,
+    minWidth: '45%',
     alignItems: 'center',
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 4,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#2D5016',
     marginBottom: 5,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
     textAlign: 'center',
+    fontWeight: '500',
   },
   actionSection: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    marginBottom: 25,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
+    paddingLeft: 5,
   },
   primaryAction: {
-    backgroundColor: '#2D5016',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: 'white',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  primaryActionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+  highlightAction: {
+    backgroundColor: '#E8F5E8',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   secondaryAction: {
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderColor: '#2D5016',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: '#F8F9FA',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 10,
-  },
-  secondaryActionText: {
-    color: '#2D5016',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   adminAction: {
-    backgroundColor: '#1B2951',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FFB74D',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#FFEBEE',
+    borderWidth: 1,
+    borderColor: '#EF5350',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIcon: {
+    fontSize: 24,
+    marginRight: 15,
+    width: 30,
+    textAlign: 'center',
+  },
+  actionContent: {
+    flex: 1,
+  },
+  primaryActionText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  highlightActionText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D5016',
+    marginBottom: 2,
+  },
+  secondaryActionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#495057',
   },
   adminActionText: {
-    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '600',
+    color: '#E65100',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#C62828',
   },
   actionSubtext: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  actionArrow: {
+    fontSize: 20,
+    color: '#999',
+    marginLeft: 10,
   },
 });
 
@@ -9528,7 +11455,7 @@ startServer();
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -9566,93 +11493,6 @@ startServer();
     "nodemon": "^3.1.10"
   }
 }
-
-
-# ==== ./backend/debug-events.js ====
-
-// Create this file: backend/debug-events.js
-const { sequelize } = require('./config/database');
-const Event = require('./models/Event');
-const User = require('./models/User');
-
-async function checkEvents() {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Database connected');
-
-    // Get all events with raw SQL
-    const [results] = await sequelize.query('SELECT * FROM events');
-    console.log('🔍 Raw events from database:', results);
-
-    // Get events using model
-    const events = await Event.findAll();
-    console.log('📅 Events via model:', events.length);
-    
-    if (events.length > 0) {
-      console.log('Event details:', events[0].toJSON());
-    }
-
-    // Check users
-    const users = await User.findAll();
-    console.log('👥 Users count:', users.length);
-    
-    if (users.length > 0) {
-      console.log('First user:', users[0].fullName, users[0].role);
-    }
-
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error:', error);
-    process.exit(1);
-  }
-}
-
-checkEvents();
-
-# ==== ./backend/debug-server.js ====
-
-// backend/debug-server.js - Temporary file to isolate the issue
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-console.log('🔍 Debug server starting...');
-
-// Basic middleware
-app.use(cors());
-app.use(express.json());
-
-// Test basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Debug server working' });
-});
-
-// Test auth routes
-console.log('Testing auth routes...');
-try {
-  const authRoutes = require('./routes/auth');
-  app.use('/api/auth', authRoutes);
-  console.log('✅ Auth routes loaded successfully');
-} catch (error) {
-  console.error('❌ Auth routes failed:', error.message);
-}
-
-// Test member routes
-console.log('Testing member routes...');
-try {
-  const memberRoutes = require('./routes/members');
-  app.use('/api/members', memberRoutes);
-  console.log('✅ Member routes loaded successfully');
-} catch (error) {
-  console.error('❌ Member routes failed:', error.message);
-}
-
-app.listen(PORT, () => {
-  console.log(`🎉 Debug server running on port ${PORT}`);
-});
 
 
 # ==== ./backend/middleware/auth.js ====
@@ -9707,29 +11547,127 @@ const adminOnlyAuth = (req, res, next) => {
 
 module.exports = { auth, adminAuth, adminOnlyAuth };
 
+# ==== ./backend/.expo/devices.json ====
+
+{
+  "devices": []
+}
+
+
 # ==== ./backend/config/database.js ====
 
+// backend/config/database.js - IMPROVED VERSION
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
-// SQLite database file will be created automatically
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: path.join(__dirname, '../database.sqlite'),
-  logging: false, // Set to console.log to see SQL queries
+  logging: false, // Set to console.log to see SQL queries during debugging
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
 });
 
 const connectDB = async () => {
   try {
+    console.log('🔌 Testing database connection...');
     await sequelize.authenticate();
-    console.log('SQLite database connected successfully');
+    console.log('✅ Database connected successfully');
     
-    // Sync all models
-    await sequelize.sync({ alter: true });
-    console.log('Database tables created/updated');
+    console.log('📄 Syncing database...');
+    
+    // Try different sync strategies
+    try {
+      // Strategy 1: No alter, just ensure tables exist
+      await sequelize.sync();
+      console.log('✅ Database synced successfully');
+    } catch (syncError) {
+      console.log('⚠️  Basic sync failed, trying without alter...');
+      
+      try {
+        // Strategy 2: Force recreate if basic sync fails
+        console.log('🔄 Creating fresh database schema...');
+        await sequelize.sync({ force: true });
+        console.log('✅ Database force synced (fresh start)');
+        
+        // Create default admin user after force sync
+        await createDefaultAdmin();
+      } catch (forceError) {
+        console.error('❌ Force sync also failed:', forceError);
+        console.log('💡 Please run one of these fix scripts:');
+        console.log('   node comprehensive-database-fix.js');
+        console.log('   node direct-sqlite-fix.js');
+        console.log('   Or delete database.sqlite for fresh start');
+        process.exit(1);
+      }
+    }
+    
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('❌ Database connection error:', error);
+    
+    // Provide helpful error messages
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      console.log('💡 Unique constraint error detected. Try these solutions:');
+      console.log('   1. node comprehensive-database-fix.js');
+      console.log('   2. node direct-sqlite-fix.js');
+      console.log('   3. rm database.sqlite (fresh start)');
+    }
+    
     process.exit(1);
+  }
+};
+
+// Create default admin user after force sync
+const createDefaultAdmin = async () => {
+  try {
+    const User = require('../models/User');
+    const bcrypt = require('bcryptjs');
+    const QRCode = require('qrcode');
+
+    // Check if admin already exists
+    const existingAdmin = await User.findOne({ where: { role: 'admin' } });
+    if (existingAdmin) {
+      console.log('ℹ️  Admin user already exists');
+      return;
+    }
+
+    console.log('👤 Creating default admin user...');
+    
+    const adminPassword = await bcrypt.hash('pass1', 12);
+    const adminMembershipId = `GJF${Date.now().toString().slice(-6)}`;
+    const adminQrData = JSON.stringify({ membershipId: adminMembershipId });
+    const adminQrCode = await QRCode.toDataURL(adminQrData);
+
+    await User.create({
+      membershipId: adminMembershipId,
+      fullName: 'System Administrator',
+      fatherName: 'Admin Father',
+      email: 'admin@egmail.com',
+      phone: '9999999999',
+      dateOfBirth: new Date('1990-01-01'),
+      address: 'System Address',
+      password: adminPassword,
+      role: 'admin',
+      occupation: 'Administrator',
+      constituency: 'System',
+      gender: 'other',
+      city: 'System City',
+      state: 'System State',
+      pincode: '000000',
+      isActive: true,
+      isVerified: true,
+      qrCode: adminQrCode,
+      qrCodeData: adminQrData
+    });
+
+    console.log('✅ Default admin created - Email: admin@egmail.com, Password: pass1');
+    
+  } catch (error) {
+    console.error('❌ Error creating default admin:', error);
   }
 };
 
@@ -9879,6 +11817,7 @@ module.exports = Event;
 
 # ==== ./backend/models/User.js ====
 
+// backend/models/User.js - FIXED VERSION (removes password hashing hooks)
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const bcrypt = require('bcryptjs');
@@ -10006,11 +11945,14 @@ const User = sequelize.define('User', {
   timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
-      // Hash password if provided
-      if (user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
+      // 🔥 REMOVED: Password hashing (controller handles this now)
+      // ❌ OLD CODE: 
+      // if (user.password) {
+      //   const salt = await bcrypt.genSalt(10);
+      //   user.password = await bcrypt.hash(user.password, salt);
+      // }
+      
+      // ✅ KEEP: Other hooks that don't conflict
       
       // Generate membership ID if not provided
       if (!user.membershipId) {
@@ -10030,11 +11972,14 @@ const User = sequelize.define('User', {
       }
     },
     beforeUpdate: async (user) => {
-      // Hash password if changed
-      if (user.changed('password') && user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
+      // 🔥 REMOVED: Password hashing (manual updates handle this)
+      // ❌ OLD CODE:
+      // if (user.changed('password') && user.password) {
+      //   const salt = await bcrypt.genSalt(10);
+      //   user.password = await bcrypt.hash(user.password, salt);
+      // }
+      
+      // ✅ KEEP: Other hooks that don't conflict
       
       // Clean empty aadharNumber to null
       if (user.changed('aadharNumber') && user.aadharNumber === '') {
@@ -10049,12 +11994,12 @@ const User = sequelize.define('User', {
   }
 });
 
-// Instance method to check password
+// ✅ KEEP: Instance method to check password
 User.prototype.validatePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
 
-// Instance method to get public profile
+// ✅ KEEP: Instance method to get public profile
 User.prototype.getPublicProfile = function() {
   const { password, ...publicData } = this.toJSON();
   return {
@@ -10893,13 +12838,76 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const getMemberById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('🔍 Getting member by ID:', id);
+
+    const member = await User.findByPk(id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!member) {
+      console.log('❌ Member not found with ID:', id);
+      return res.status(404).json({ 
+        success: false,
+        message: 'Member not found' 
+      });
+    }
+
+    // Return complete member data structure
+    const memberData = {
+      id: member.id,
+      membershipId: member.membershipId,
+      fullName: member.fullName,
+      fatherName: member.fatherName,
+      email: member.email,
+      phone: member.phone,
+      dateOfBirth: member.dateOfBirth,
+      occupation: member.occupation,
+      address: member.address,
+      city: member.city,
+      state: member.state,
+      pincode: member.pincode,
+      constituency: member.constituency,
+      gender: member.gender,
+      role: member.role,
+      isVerified: member.isVerified,
+      isActive: member.isActive,
+      profilePhoto: member.profilePhoto,
+      qrCode: member.qrCode,
+      qrCodeData: member.qrCodeData,
+      aadharNumber: member.aadharNumber,
+      aadharVerified: member.aadharVerified,
+      aadharVerificationDate: member.aadharVerificationDate,
+      registeredBy: member.registeredBy,
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+    };
+
+    console.log('✅ Member found:', member.fullName);
+    res.json(memberData);
+
+  } catch (error) {
+    console.error('❌ Error getting member by ID:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Don't forget to add getMemberById to your module.exports at the bottom:
 module.exports = { 
   getProfile, 
   getAllMembers, 
   scanQRCode, 
   updateMemberRole, 
   deleteMember,
-  updateProfile 
+  updateProfile,
+  getMemberById  // <-- Add this line
 };
 
 # ==== ./backend/controllers/attendanceController.js ====
@@ -11447,7 +13455,7 @@ const login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
-    console.log('🔐 Login attempt for:', identifier ? identifier.substring(0, 3) + '***' : 'missing');
+    
 
     // Validate input
     if (!identifier || !password) {
@@ -11658,7 +13666,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { auth, adminAuth, adminOnlyAuth } = require('../middleware/auth');
-const { getProfile, getAllMembers, scanQRCode, updateMemberRole, deleteMember, updateProfile } = require('../controllers/memberController');
+const { getProfile, getAllMembers, scanQRCode, updateMemberRole, deleteMember, updateProfile, getMemberById } = require('../controllers/memberController');
 
 const router = express.Router();
 
@@ -11697,8 +13705,13 @@ router.get('/all', auth, adminAuth, getAllMembers);
 router.post('/scan', auth, adminAuth, scanQRCode);
 router.put('/role/:id', auth, adminAuth, updateMemberRole);
 
+// NEW: Get member by ID route (Admin/Organizer access)
+router.get('/:id', auth, adminAuth, getMemberById);
+
 // Delete route - ADMIN ONLY
 router.delete('/:id', auth, adminOnlyAuth, deleteMember);
+
+
 
 module.exports = router;
 

@@ -1,3 +1,4 @@
+// Replace your mobile-app/app/admin.tsx with this updated version
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -18,6 +19,7 @@ export default function AdminDashboard() {
     totalMembers: 0,
     newMembersThisWeek: 0,
     activeMembers: 0,
+    totalAttendance: 0,
   });
 
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function AdminDashboard() {
       totalMembers: 156,
       newMembersThisWeek: 12,
       activeMembers: 142,
+      totalAttendance: 89,
     });
   };
 
@@ -39,39 +42,29 @@ export default function AdminDashboard() {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          onPress: async () => {
-            await logout();
-            router.replace('/');
-          }
-        },
+        { text: 'Logout', onPress: logout },
       ]
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style="light" backgroundColor="#1B2951" />
+      
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.roleText}>{user?.role?.toUpperCase()}</Text>
-            <Text style={styles.nameText}>{user?.name}</Text>
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>
+              Welcome, {user?.fullName || user?.name}
+            </Text>
+            <Text style={styles.welcomeSubtitle}>
+              {user?.role === 'admin' ? 'Admin Control Panel' : 'Organizer Dashboard'}
+            </Text>
+            <Text style={styles.welcomeDescription}>
+              Manage party membership and activities
+            </Text>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Welcome Card */}
-        <View style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>
-            {user?.role === 'admin' ? 'Admin Control Panel' : 'Organizer Dashboard'}
-          </Text>
-          <Text style={styles.welcomeSubtitle}>
-            Manage party membership and activities
-          </Text>
         </View>
 
         {/* Stats Cards */}
@@ -88,9 +81,13 @@ export default function AdminDashboard() {
             <Text style={styles.statNumber}>{stats.activeMembers}</Text>
             <Text style={styles.statLabel}>Active Members</Text>
           </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats.totalAttendance}</Text>
+            <Text style={styles.statLabel}>Total Attendance</Text>
+          </View>
         </View>
 
-        {/* Action Buttons */}
+        {/* Member Management Section */}
         <View style={styles.actionSection}>
           <Text style={styles.sectionTitle}>Member Management</Text>
           
@@ -98,23 +95,88 @@ export default function AdminDashboard() {
             style={styles.primaryAction}
             onPress={() => router.push('/scanner')}
           >
-            <Text style={styles.primaryActionText}>📱 Scan Member QR Code</Text>
-            <Text style={styles.actionSubtext}>Verify member identity</Text>
+            <Text style={styles.actionIcon}>📱</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>Scan Member QR Code</Text>
+              <Text style={styles.actionSubtext}>Verify member identity</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.primaryAction}
             onPress={() => router.push('/members')}
           >
-            <Text style={styles.primaryActionText}>👥 View All Members</Text>
-            <Text style={styles.actionSubtext}>Browse member directory</Text>
+            <Text style={styles.actionIcon}>👥</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>View All Members</Text>
+              <Text style={styles.actionSubtext}>Browse member directory</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.secondaryAction}
             onPress={() => router.push('/register')}
           >
-            <Text style={styles.secondaryActionText}>➕ Register New Member</Text>
+            <Text style={styles.actionIcon}>➕</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.secondaryActionText}>Register New Member</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Events & Attendance Section */}
+        <View style={styles.actionSection}>
+          <Text style={styles.sectionTitle}>Events & Attendance</Text>
+          
+          <TouchableOpacity
+            style={styles.primaryAction}
+            onPress={() => router.push('/events')}
+          >
+            <Text style={styles.actionIcon}>📅</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>Manage Events</Text>
+              <Text style={styles.actionSubtext}>Create and view events</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.primaryAction}
+            onPress={() => router.push('/attendance-scanner')}
+          >
+            <Text style={styles.actionIcon}>📝</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.primaryActionText}>Mark Attendance</Text>
+              <Text style={styles.actionSubtext}>Scan QR codes for attendance</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          {/* NEW: Attendance Reports Button */}
+          <TouchableOpacity
+            style={styles.highlightAction}
+            onPress={() => router.push('/attendance-reports')}
+          >
+            <Text style={styles.actionIcon}>📊</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.highlightActionText}>Attendance Reports</Text>
+              <Text style={styles.actionSubtext}>View attendance statistics and records</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryAction}
+            onPress={() => router.push('/location-attendance')}
+          >
+            <Text style={styles.actionIcon}>📍</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.secondaryActionText}>Location Attendance</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
           </TouchableOpacity>
         </View>
 
@@ -127,22 +189,54 @@ export default function AdminDashboard() {
               style={styles.adminAction}
               onPress={() => router.push('/roles')}
             >
-              <Text style={styles.adminActionText}>⚙️ Manage Roles</Text>
-              <Text style={styles.actionSubtext}>Assign organizer permissions</Text>
+              <Text style={styles.actionIcon}>⚙️</Text>
+              <View style={styles.actionContent}>
+                <Text style={styles.adminActionText}>Manage Roles</Text>
+                <Text style={styles.actionSubtext}>Assign organizer permissions</Text>
+              </View>
+              <Text style={styles.actionArrow}>→</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.adminAction}
               onPress={() => Alert.alert('Feature', 'Export functionality coming soon!')}
             >
-              <Text style={styles.adminActionText}>📊 Export Data</Text>
-              <Text style={styles.actionSubtext}>Download member reports</Text>
+              <Text style={styles.actionIcon}>📤</Text>
+              <View style={styles.actionContent}>
+                <Text style={styles.adminActionText}>Export Data</Text>
+                <Text style={styles.actionSubtext}>Download member reports</Text>
+              </View>
+              <Text style={styles.actionArrow}>→</Text>
             </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
 
-      <StatusBar style="light" />
+        {/* Account Section */}
+        <View style={styles.actionSection}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          
+          <TouchableOpacity
+            style={styles.secondaryAction}
+            onPress={() => router.push('/profile-edit')}
+          >
+            <Text style={styles.actionIcon}>✏️</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.secondaryActionText}>Edit Profile</Text>
+            </View>
+            <Text style={styles.actionArrow}>→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.actionIcon}>🚪</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -157,143 +251,173 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#1B2951',
-    paddingVertical: 20,
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingVertical: 30,
+    paddingTop: 40,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  roleText: {
-    color: '#4CAF50',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  nameText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  logoutButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'white',
-  },
-  logoutText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  welcomeCard: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1B2951',
+  welcomeSection: {
     marginBottom: 10,
   },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 5,
+  },
   welcomeSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    fontSize: 18,
+    color: '#E0E0E0',
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  welcomeDescription: {
+    fontSize: 14,
+    color: '#B0B0B0',
   },
   statsContainer: {
     flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    gap: 10,
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    gap: 15,
   },
   statCard: {
-    flex: 1,
     backgroundColor: 'white',
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    borderRadius: 15,
+    padding: 20,
+    borderRadius: 12,
+    flex: 1,
+    minWidth: '45%',
     alignItems: 'center',
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 4,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#2D5016',
     marginBottom: 5,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
     textAlign: 'center',
+    fontWeight: '500',
   },
   actionSection: {
-    marginHorizontal: 20,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    marginBottom: 25,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
+    paddingLeft: 5,
   },
   primaryAction: {
-    backgroundColor: '#2D5016',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: 'white',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  primaryActionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+  highlightAction: {
+    backgroundColor: '#E8F5E8',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   secondaryAction: {
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderColor: '#2D5016',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: '#F8F9FA',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 10,
-  },
-  secondaryActionText: {
-    color: '#2D5016',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   adminAction: {
-    backgroundColor: '#1B2951',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FFB74D',
+    padding: 20,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#FFEBEE',
+    borderWidth: 1,
+    borderColor: '#EF5350',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIcon: {
+    fontSize: 24,
+    marginRight: 15,
+    width: 30,
+    textAlign: 'center',
+  },
+  actionContent: {
+    flex: 1,
+  },
+  primaryActionText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  highlightActionText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D5016',
+    marginBottom: 2,
+  },
+  secondaryActionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#495057',
   },
   adminActionText: {
-    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '600',
+    color: '#E65100',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#C62828',
   },
   actionSubtext: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  actionArrow: {
+    fontSize: 20,
+    color: '#999',
+    marginLeft: 10,
   },
 });

@@ -80,10 +80,10 @@ export const apiRequest = async (endpoint, options = {}) => {
 };
 
 export const authAPI = {
-  login: async (identifier, password) => {
+  login: async (credentials) => {
     return apiRequest('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify(credentials),
     });
   },
 };

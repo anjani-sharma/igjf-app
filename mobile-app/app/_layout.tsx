@@ -22,6 +22,10 @@ export default function RootLayout() {
         <Stack.Screen name="event-detail" />
         <Stack.Screen name="attendance-scanner" />
         <Stack.Screen name="location-attendance" />
+        
+        {/* NEW: Attendance Reports screen */}
+        <Stack.Screen name="attendance-reports" />
+        <Stack.Screen name="member-details" />
       </Stack>
     </AuthProvider>
   );
