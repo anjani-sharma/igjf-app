@@ -3,7 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { auth, adminAuth, adminOnlyAuth } = require('../middleware/auth');
-const { getProfile, getAllMembers, scanQRCode, updateMemberRole, deleteMember, updateProfile } = require('../controllers/memberController');
+const { getProfile, getAllMembers, scanQRCode, updateMemberRole, deleteMember, updateProfile, getMemberById } = require('../controllers/memberController');
 
 const router = express.Router();
 
@@ -42,7 +42,12 @@ router.get('/all', auth, adminAuth, getAllMembers);
 router.post('/scan', auth, adminAuth, scanQRCode);
 router.put('/role/:id', auth, adminAuth, updateMemberRole);
 
+// NEW: Get member by ID route (Admin/Organizer access)
+router.get('/:id', auth, adminAuth, getMemberById);
+
 // Delete route - ADMIN ONLY
 router.delete('/:id', auth, adminOnlyAuth, deleteMember);
+
+
 
 module.exports = router;

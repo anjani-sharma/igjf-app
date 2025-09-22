@@ -422,11 +422,74 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const getMemberById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('🔍 Getting member by ID:', id);
+
+    const member = await User.findByPk(id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!member) {
+      console.log('❌ Member not found with ID:', id);
+      return res.status(404).json({ 
+        success: false,
+        message: 'Member not found' 
+      });
+    }
+
+    // Return complete member data structure
+    const memberData = {
+      id: member.id,
+      membershipId: member.membershipId,
+      fullName: member.fullName,
+      fatherName: member.fatherName,
+      email: member.email,
+      phone: member.phone,
+      dateOfBirth: member.dateOfBirth,
+      occupation: member.occupation,
+      address: member.address,
+      city: member.city,
+      state: member.state,
+      pincode: member.pincode,
+      constituency: member.constituency,
+      gender: member.gender,
+      role: member.role,
+      isVerified: member.isVerified,
+      isActive: member.isActive,
+      profilePhoto: member.profilePhoto,
+      qrCode: member.qrCode,
+      qrCodeData: member.qrCodeData,
+      aadharNumber: member.aadharNumber,
+      aadharVerified: member.aadharVerified,
+      aadharVerificationDate: member.aadharVerificationDate,
+      registeredBy: member.registeredBy,
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+    };
+
+    console.log('✅ Member found:', member.fullName);
+    res.json(memberData);
+
+  } catch (error) {
+    console.error('❌ Error getting member by ID:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Don't forget to add getMemberById to your module.exports at the bottom:
 module.exports = { 
   getProfile, 
   getAllMembers, 
   scanQRCode, 
   updateMemberRole, 
   deleteMember,
-  updateProfile 
+  updateProfile,
+  getMemberById  // <-- Add this line
 };

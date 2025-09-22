@@ -1,3 +1,4 @@
+// backend/models/User.js - FIXED VERSION (removes password hashing hooks)
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const bcrypt = require('bcryptjs');
@@ -125,11 +126,14 @@ const User = sequelize.define('User', {
   timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
-      // Hash password if provided
-      if (user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
+      // 🔥 REMOVED: Password hashing (controller handles this now)
+      // ❌ OLD CODE: 
+      // if (user.password) {
+      //   const salt = await bcrypt.genSalt(10);
+      //   user.password = await bcrypt.hash(user.password, salt);
+      // }
+      
+      // ✅ KEEP: Other hooks that don't conflict
       
       // Generate membership ID if not provided
       if (!user.membershipId) {
@@ -149,11 +153,14 @@ const User = sequelize.define('User', {
       }
     },
     beforeUpdate: async (user) => {
-      // Hash password if changed
-      if (user.changed('password') && user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
+      // 🔥 REMOVED: Password hashing (manual updates handle this)
+      // ❌ OLD CODE:
+      // if (user.changed('password') && user.password) {
+      //   const salt = await bcrypt.genSalt(10);
+      //   user.password = await bcrypt.hash(user.password, salt);
+      // }
+      
+      // ✅ KEEP: Other hooks that don't conflict
       
       // Clean empty aadharNumber to null
       if (user.changed('aadharNumber') && user.aadharNumber === '') {
@@ -168,12 +175,12 @@ const User = sequelize.define('User', {
   }
 });
 
-// Instance method to check password
+// ✅ KEEP: Instance method to check password
 User.prototype.validatePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
 
-// Instance method to get public profile
+// ✅ KEEP: Instance method to get public profile
 User.prototype.getPublicProfile = function() {
   const { password, ...publicData } = this.toJSON();
   return {

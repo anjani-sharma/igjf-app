@@ -18,8 +18,7 @@ const register = async (req, res) => {
       constituency,
       password,
       verificationMethod,
-      // 🔥 FIXED: Accept both spellings and normalize to backend format
-      aadharNumber: reqAadharNumber,
+      adharNumber: reqAadharNumber,
       aadhaarNumber: reqAadhaarNumber, // Alternative spelling from frontend
       aadharVerified: reqAadharVerified,
       aadhaarVerified: reqAadhaarVerified,
@@ -35,6 +34,10 @@ const register = async (req, res) => {
       verificationMethod,
       aadharProvided: !!(reqAadharNumber || reqAadhaarNumber)
     });
+
+    // 🔍 DEBUG: Check password received
+    console.log('🔍 Registration - Password received:', password ? 'YES' : 'NO');
+    console.log('🔍 Registration - Password length:', password ? password.length : 0);
 
     // Validate required fields
     if (!fullName || !email || !password) {
@@ -68,8 +71,16 @@ const register = async (req, res) => {
       }
     }
 
+    // 🔍 DEBUG: Before hashing password
+    console.log('🔍 Registration - About to hash password...');
+    
     // Hash password
     const hashedPassword = await bcryptjs.hash(password, 12);
+    
+    // 🔍 DEBUG: After hashing password
+    console.log('🔍 Registration - Password hashed successfully');
+    console.log('🔍 Registration - Hashed password length:', hashedPassword.length);
+    console.log('🔍 Registration - Hashed password starts with:', hashedPassword.substring(0, 10));
 
     // Generate unique membership ID
     const membershipId = `GJF${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
@@ -92,6 +103,9 @@ const register = async (req, res) => {
     // Generate QR code
     const qrCodeUrl = await QRCode.toDataURL(qrCodeData);
 
+    // 🔍 DEBUG: Before creating user
+    console.log('🔍 Registration - Creating user with hashed password...');
+
     // Create user with cleaned data
     const user = await User.create({
       membershipId,
@@ -103,7 +117,7 @@ const register = async (req, res) => {
       occupation,
       address,
       constituency,
-      password: hashedPassword,
+      password: hashedPassword, // Make sure we're using the hashed password
       profilePhoto: profilePhotoPath,
       qrCode: qrCodeUrl,
       qrCodeData,
@@ -118,6 +132,10 @@ const register = async (req, res) => {
       state: state || null,
       pincode: pincode || null
     });
+
+    // 🔍 DEBUG: After creating user
+    console.log('🔍 Registration - User created successfully');
+    console.log('🔍 Registration - Stored password hash length:', user.password.length);
 
     // Generate JWT token
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -163,10 +181,21 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    // 🔍 DEBUG: Log what we're receiving
+    console.log('🔍 Raw request body:', req.body);
+    console.log('🔍 Body type:', typeof req.body);
+    console.log('🔍 Body keys:', Object.keys(req.body));
+    console.log('🔍 Content-Type header:', req.headers['content-type']);
+
+
     const { identifier, password } = req.body;
 
-    console.log('🔐 Login attempt for:', identifier ? identifier.substring(0, 3) + '***' : 'missing');
+    console.log('🔍 Extracted values:', { 
+      identifier: identifier, 
+      password: password ? '***' : undefined 
+    });
 
+    
     // Validate input
     if (!identifier || !password) {
       return res.status(400).json({ message: 'Email/phone and password are required' });
@@ -194,16 +223,28 @@ const login = async (req, res) => {
       isActive: user.isActive 
     });
 
+    // 🔍 DEBUG: Add detailed password comparison logging
+    console.log('🔍 Login - Plain password received:', password);
+    console.log('🔍 Login - Plain password length:', password.length);
+    console.log('🔍 Login - Plain password type:', typeof password);
+    console.log('🔍 Login - Hashed password from DB:', user.password);
+    console.log('🔍 Login - Hashed password length:', user.password.length);
+    console.log('🔍 Login - Hashed password starts with:', user.password.substring(0, 7));
+
+
     // Check password
     const isMatch = await bcryptjs.compare(password, user.password);
+    console.log('🔍 Login - bcrypt.compare result:', isMatch);
+
     if (!isMatch) {
       console.log('❌ Password mismatch for user:', user.email);
+      
+      // 🔍 DEBUG: Try manual verification
+      console.log('🔍 Login - Trying manual bcrypt verification...');
+      const manualCheck = await bcryptjs.compare('abc1', user.password);
+      console.log('🔍 Login - Manual "abc1" check result:', manualCheck);
+      
       return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(400).json({ message: 'Account is deactivated. Please contact admin.' });
     }
 
     // Generate JWT token
