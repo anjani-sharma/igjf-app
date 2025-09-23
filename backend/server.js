@@ -55,11 +55,20 @@ app.use('/api/events/attendance', (req, res, next) => {
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint
+// Health check endpoints
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    version: '1.1.0'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'API Server is running',
     timestamp: new Date().toISOString(),
     version: '1.1.0'
   });
