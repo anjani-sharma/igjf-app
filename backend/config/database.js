@@ -1,91 +1,99 @@
-// backend/config/database.js - IMPROVED VERSION
+// backend/config/database.js - Production Ready Version
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: path.join(__dirname, '../database.sqlite'),
-  logging: false, // Set to console.log to see SQL queries during debugging
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  }
-});
+// Determine if we're using PostgreSQL (production) or SQLite (development)
+const isProduction = process.env.NODE_ENV === 'production';
+const DATABASE_URL = process.env.DATABASE_URL;
+
+let sequelize;
+
+if (isProduction && DATABASE_URL) {
+  // Production PostgreSQL configuration
+  sequelize = new Sequelize(DATABASE_URL, {
+    dialect: 'postgres',
+    protocol: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false // Important for Render's PostgreSQL
+      }
+    },
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  });
+} else {
+  // Development SQLite configuration
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: process.env.DATABASE_PATH || path.join(__dirname, '../database.db'),
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  });
+}
 
 const connectDB = async () => {
   try {
-    console.log('🔌 Testing database connection...');
     await sequelize.authenticate();
-    console.log('✅ Database connected successfully');
+    console.log('Database connection established successfully');
     
-    console.log('📄 Syncing database...');
-
-    await sequelize.query('PRAGMA foreign_keys = OFF');
-    
-    // Try different sync strategies
-    try {
-      // Strategy 1: No alter, just ensure tables exist
-      await sequelize.sync();
-      console.log('✅ Database synced successfully');
-    } catch (syncError) {
-      console.log('⚠️  Basic sync failed, trying without alter...');
+    if (sequelize.getDialect() === 'sqlite') {
+      // SQLite-specific operations
+      await sequelize.query('PRAGMA foreign_keys = OFF');
       
       try {
-        // Strategy 2: Force recreate if basic sync fails
-        console.log('🔄 Creating fresh database schema...');
+        await sequelize.sync();
+      } catch (syncError) {
+        console.error('Basic sync failed, attempting force sync:', syncError.message);
         await sequelize.sync({ force: true });
-        console.log('✅ Database force synced (fresh start)');
-        
-        // Create default admin user after force sync
         await createDefaultAdmin();
-
-        
-      } catch (forceError) {
-        console.error('❌ Force sync also failed:', forceError);
-        console.log('💡 Please run one of these fix scripts:');
-        console.log('   node comprehensive-database-fix.js');
-        console.log('   node direct-sqlite-fix.js');
-        console.log('   Or delete database.sqlite for fresh start');
-        process.exit(1);
+      }
+      
+      await sequelize.query('PRAGMA foreign_keys = ON');
+    } else {
+      // PostgreSQL operations
+      try {
+        await sequelize.sync();
+        console.log('Database synchronized successfully');
+      } catch (syncError) {
+        console.error('Database sync error:', syncError.message);
+        // For production, we don't want to force sync by default
+        // Only force sync if explicitly set in environment variable
+        if (process.env.FORCE_DB_SYNC === 'true') {
+          console.log('Forcing database sync as specified in environment');
+          await sequelize.sync({ force: true });
+          await createDefaultAdmin();
+        } else {
+          throw syncError;
+        }
       }
     }
-    
-    await sequelize.query('PRAGMA foreign_keys = ON');
-    
   } catch (error) {
-    console.error('❌ Database connection error:', error);
-    
-    // Provide helpful error messages
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      console.log('💡 Unique constraint error detected. Try these solutions:');
-      console.log('   1. node comprehensive-database-fix.js');
-      console.log('   2. node direct-sqlite-fix.js');
-      console.log('   3. rm database.sqlite (fresh start)');
-    }
-    
-    process.exit(1);
+    console.error('Database connection failed:', error.message);
+    throw error;
   }
 };
 
-// Create default admin user after force sync
 const createDefaultAdmin = async () => {
   try {
     const User = require('../models/User');
     const bcrypt = require('bcryptjs');
     const QRCode = require('qrcode');
 
-    // Check if admin already exists
     const existingAdmin = await User.findOne({ where: { role: 'admin' } });
-    if (existingAdmin) {
-      console.log('ℹ️  Admin user already exists');
-      return;
-    }
+    if (existingAdmin) return;
 
-    console.log('👤 Creating default admin user...');
-    
-    const adminPassword = await bcrypt.hash('pass1', 12);
+    const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'abc1', 12);
     const adminMembershipId = `GJF${Date.now().toString().slice(-6)}`;
     const adminQrData = JSON.stringify({ membershipId: adminMembershipId });
     const adminQrCode = await QRCode.toDataURL(adminQrData);
@@ -93,8 +101,8 @@ const createDefaultAdmin = async () => {
     await User.create({
       membershipId: adminMembershipId,
       fullName: 'System Administrator',
-      fatherName: 'Admin Father',
-      email: 'admin@egmail.com',
+      fatherName: 'System',
+      email: process.env.ADMIN_EMAIL || 'admin@gmail.com',
       phone: '9999999999',
       dateOfBirth: new Date('1990-01-01'),
       address: 'System Address',
@@ -111,11 +119,9 @@ const createDefaultAdmin = async () => {
       qrCode: adminQrCode,
       qrCodeData: adminQrData
     });
-
-    console.log('✅ Default admin created - Email: admin@egmail.com, Password: pass1');
     
   } catch (error) {
-    console.error('❌ Error creating default admin:', error);
+    console.error('Failed to create default admin:', error.message);
   }
 };
 
