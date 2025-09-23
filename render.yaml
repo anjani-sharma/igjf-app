@@ -4,6 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
+    branch: deployment-cleanup
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
     healthCheckPath: /
@@ -18,6 +19,7 @@ services:
     env: static
     region: oregon
     plan: free
+    branch: deployment-cleanup
     buildCommand: cd mobile-app && npm install && npm run build:web
     staticPublishPath: mobile-app/dist
     headers:
