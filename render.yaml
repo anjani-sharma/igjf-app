@@ -14,9 +14,8 @@ services:
       - key: PORT
         value: 10000
 
-  - type: web
+  - type: static
     name: igjf-frontend
-    env: static
     region: oregon
     plan: free
     branch: deployment-cleanup
