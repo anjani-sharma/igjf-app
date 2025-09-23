@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'https://igjf-app.onrender.com/api';
 
 class ApiService {
   async getAuthHeader() {

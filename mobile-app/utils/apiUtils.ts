@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration
 const API_CONFIG = {
-  BASE_URL: 'http://192.168.1.65:5000/api',
+  BASE_URL: 'https://igjf-app.onrender.com/api',
   TIMEOUT: 8000, // 8 seconds timeout for production
   RETRY_ATTEMPTS: 2,
   RETRY_DELAY: 1000, // 1 second between retries
