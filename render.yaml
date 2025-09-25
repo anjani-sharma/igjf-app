@@ -3,22 +3,23 @@ services:
     name: igjf-backend
     runtime: node
     plan: free
-    buildCommand: cd backend && npm install
+    buildCommand: rm -rf node_modules package-lock.json && npm install && npm run build
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
         generateValue: true
-      - key: MONGODB_URI
+      - key: DATABASE_URL
         fromDatabase:
-          name: igjf-mongodb
+          name: IGJF
           property: connectionString
     autoDeploy: false
 
   - type: static
     name: igjf-frontend-expo
-    staticPublishPath: static-deployment/server
+    buildCommand: cd src/mobile-app && rm -rf node_modules package-lock.json && npm install && npm run build:web
+    staticPublishPath: src/mobile-app/dist
     branch: deployment-cleanup
     headers:
       - name: X-Frame-Options
@@ -27,5 +28,5 @@ services:
         value: nosniff
 
 databases:
-  - name: igjf-mongodb
+  - name: IGJF
     plan: free
