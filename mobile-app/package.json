@@ -13,7 +13,8 @@
     "web": "expo start --web",
     "build": "expo export --platform web --output-dir dist-merged --clear",
     "build:web": "expo export --platform web --output-dir dist --clear",
-    "reset-project": "node ./scripts/reset-project.js"
+    "reset-project": "node ./scripts/reset-project.js",
+    "postinstall": "npm rebuild lightningcss --platform=linux --arch=x64 || true"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -42,6 +43,12 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~19.1.10",
     "typescript": "~5.9.2"
+  },
+  "optionalDependencies": {
+    "@lightningcss/linux-x64-gnu": "^1.21.0",
+    "@lightningcss/darwin-x64": "^1.21.0",
+    "@lightningcss/darwin-arm64": "^1.21.0",
+    "@lightningcss/win32-x64-msvc": "^1.21.0"
   },
   "private": true
 }
