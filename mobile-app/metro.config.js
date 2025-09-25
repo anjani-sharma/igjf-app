@@ -11,4 +11,7 @@ config.resolver.assetExts.push(
 // Ensure proper handling of web builds
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
+// Disable CSS modules processing to avoid lightningcss dependency issues
+config.transformer.enableCSSModules = false;
+
 module.exports = config;

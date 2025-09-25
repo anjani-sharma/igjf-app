@@ -53,7 +53,7 @@ export default function QRScanner() {
       const token = await AsyncStorage.getItem('token');
       
       // FIXED: Use correct API endpoint and handle network issues
-      const response = await fetch('http://192.168.1.65:5000/api/members/scan', {
+      const response = await fetch('https://igjf-app.onrender.com/api/members/scan', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -63,8 +63,6 @@ export default function QRScanner() {
           qrData: typeof qrData === 'string' ? qrData : JSON.stringify(qrData),
           membershipId: qrData.membershipId || data 
         }),
-        // Add timeout to prevent hanging requests
-        timeout: 10000,
       });
 
       console.log('API Response status:', response.status);

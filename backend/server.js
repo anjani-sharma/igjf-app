@@ -14,7 +14,16 @@ const memberRoutes = require('./routes/members');
 const eventRoutes = require('./routes/events');
 
 const app = express(); // ← This line must come BEFORE any app.use() calls
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
+
+// Health check endpoint for deployment platforms
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'IGJF Backend API is running', 
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 console.log('🚀 Starting server...');
 

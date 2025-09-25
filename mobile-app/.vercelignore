@@ -1,0 +1,24 @@
+# Ignore all source files and dependencies to force static deployment
+node_modules/
+package.json
+package-lock.json
+metro.config.js
+app.json
+eas.json
+tsconfig.json
+eslint.config.js
+app/
+components/
+constants/
+contexts/
+hooks/
+services/
+src/
+utils/
+assets/
+.expo/
+.vscode/
+scripts/
+
+# Only deploy the dist-merged directory
+!dist-merged/

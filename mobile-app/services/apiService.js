@@ -1,8 +1,26 @@
 // mobile-app/services/apiService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Environment-based API configuration
+const getApiBaseUrl = () => {
+  // For web deployment, use environment variable or fallback
+  if (typeof window !== 'undefined' && window.location) {
+    // Production web deployment
+    if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('netlify.app')) {
+      return process.env.EXPO_PUBLIC_API_URL || 'https://igjf-app.onrender.com/api';
+    }
+    // Local development
+    if (window.location.hostname === 'localhost') {
+      return 'http://localhost:3000/api';
+    }
+  }
+  
+  // Mobile/Expo environment
+  return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+};
+
 export const API_CONFIG = {
-  BASE_URL: 'https://igjf-app.onrender.com/api',
+  BASE_URL: getApiBaseUrl(),
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 2,
   RETRY_DELAY: 1000,

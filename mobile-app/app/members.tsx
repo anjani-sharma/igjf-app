@@ -32,7 +32,7 @@ export default function Members() {
   const loadMembers = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch('http://192.168.1.65:5000/api/members/all', {
+      const response = await fetch('https://igjf-app.onrender.com/api/members/all', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

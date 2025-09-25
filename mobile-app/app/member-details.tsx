@@ -118,7 +118,7 @@ export default function MemberDetails() {
   const loadMemberData = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`http://192.168.1.65:5000/api/members/${memberId}`, {
+      const response = await fetch(`https://igjf-app.onrender.com/api/members/${memberId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -144,7 +144,7 @@ export default function MemberDetails() {
     try {
       const token = await AsyncStorage.getItem('token');
       const response = await fetch(
-        `http://192.168.1.65:5000/api/events/attendance/records?userId=${memberId}`,
+        `https://igjf-app.onrender.com/api/events/attendance/records?userId=${memberId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

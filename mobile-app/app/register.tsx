@@ -308,7 +308,7 @@ export default function Register() {
 
       console.log('🌐 Sending registration request...');
 
-      const response = await fetch('http://192.168.1.65:5000/api/auth/register', {
+      const response = await fetch('https://igjf-app.onrender.com/api/auth/register', {
         method: 'POST',
         body: registerFormData,
         

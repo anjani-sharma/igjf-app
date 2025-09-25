@@ -1,0 +1,121 @@
+{
+  "apiRoutes": [],
+  "htmlRoutes": [
+    {
+      "file": "./index.tsx",
+      "page": "/index",
+      "namedRegex": "^/(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./roles.tsx",
+      "page": "/roles",
+      "namedRegex": "^/roles(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./login.tsx",
+      "page": "/login",
+      "namedRegex": "^/login(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./admin.tsx",
+      "page": "/admin",
+      "namedRegex": "^/admin(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./events.tsx",
+      "page": "/events",
+      "namedRegex": "^/events(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./scanner.tsx",
+      "page": "/scanner",
+      "namedRegex": "^/scanner(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./members.tsx",
+      "page": "/members",
+      "namedRegex": "^/members(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "expo-router/build/views/Sitemap.js",
+      "page": "/_sitemap",
+      "namedRegex": "^/_sitemap(?:/)?$",
+      "routeKeys": {},
+      "generated": true
+    },
+    {
+      "file": "./register.tsx",
+      "page": "/register",
+      "namedRegex": "^/register(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./dashboard.tsx",
+      "page": "/dashboard",
+      "namedRegex": "^/dashboard(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./profile-edit.tsx",
+      "page": "/profile-edit",
+      "namedRegex": "^/profile\\-edit(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./event-detail.tsx",
+      "page": "/event-detail",
+      "namedRegex": "^/event\\-detail(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./create-event.tsx",
+      "page": "/create-event",
+      "namedRegex": "^/create\\-event(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./member-details.tsx",
+      "page": "/member-details",
+      "namedRegex": "^/member\\-details(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./attendance-scanner.tsx",
+      "page": "/attendance-scanner",
+      "namedRegex": "^/attendance\\-scanner(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./attendance-reports.tsx",
+      "page": "/attendance-reports",
+      "namedRegex": "^/attendance\\-reports(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./location-attendance.tsx",
+      "page": "/location-attendance",
+      "namedRegex": "^/location\\-attendance(?:/)?$",
+      "routeKeys": {}
+    }
+  ],
+  "notFoundRoutes": [
+    {
+      "file": "expo-router/build/views/Unmatched.js",
+      "page": "/+not-found",
+      "namedRegex": "^(?:/(?<notfound>.+?))?(?:/)?$",
+      "routeKeys": {
+        "notfound": "not-found"
+      },
+      "generated": true
+    }
+  ],
+  "redirects": [],
+  "rewrites": []
+}

@@ -37,6 +37,7 @@ interface AuthContextType {
   user: User | null;
   login: (token: string, userData: User) => Promise<void>;
   logout: () => Promise<void>;
+  forceLogout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -57,8 +58,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (token && userData) {
         const parsedUser = JSON.parse(userData);
-        console.log('✅ Loaded user data:', parsedUser);
-        setUser(parsedUser);
+        console.log('✅ Loaded cached user data:', parsedUser);
+        
+        // Validate token with production server
+        try {
+          const response = await fetch('https://igjf-app.onrender.com/api/members/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.status === 401) {
+            console.log('🔄 Token invalid for production server, clearing cached data...');
+            await forceLogout();
+            return;
+          }
+          
+          if (response.ok) {
+            console.log('✅ Token validated successfully');
+            setUser(parsedUser);
+          } else {
+            console.log('⚠️ Token validation failed, clearing cached data...');
+            await forceLogout();
+            return;
+          }
+        } catch (validationError) {
+          console.log('⚠️ Token validation error, using cached data:', validationError);
+          setUser(parsedUser);
+        }
       }
     } catch (error) {
       console.error('⚠️ Error loading user data:', error);
@@ -105,8 +133,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const forceLogout = async () => {
+    try {
+      console.log('🔄 Force logout - clearing all cached authentication data');
+      
+      // Clear AsyncStorage
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+      
+      // Clear any other potential auth-related keys
+      const allKeys = await AsyncStorage.getAllKeys();
+      const authKeys = allKeys.filter(key => 
+        key.includes('token') || 
+        key.includes('user') || 
+        key.includes('auth')
+      );
+      
+      if (authKeys.length > 0) {
+        await AsyncStorage.multiRemove(authKeys);
+        console.log('🧹 Cleared additional auth keys:', authKeys);
+      }
+      
+      setUser(null);
+      
+      console.log('✅ Force logout completed - all authentication data cleared');
+    } catch (error) {
+      console.error('⚠️ Error during force logout:', error);
+      // Still set user to null even if storage clear fails
+      setUser(null);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, forceLogout, loading }}>
       {children}
     </AuthContext.Provider>
   );

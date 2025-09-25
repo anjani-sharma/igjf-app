@@ -1,0 +1,33 @@
+<svg width="1284" height="2778" viewBox="0 0 1284 2778" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1284" height="2778" fill="white"/>
+  
+  <!-- Main logo area -->
+  <rect x="342" y="1089" width="600" height="600" rx="120" fill="#2563EB"/>
+  
+  <!-- IGJF Text -->
+  <text x="642" y="1320" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="white">IGJF</text>
+  
+  <!-- Subtitle -->
+  <text x="642" y="1420" font-family="Arial, sans-serif" font-size="40" text-anchor="middle" fill="#E5E7EB">Member Management</text>
+  
+  <!-- App name below logo -->
+  <text x="642" y="1800" font-family="Arial, sans-serif" font-size="48" font-weight="600" text-anchor="middle" fill="#374151">IGJF Member App</text>
+  
+  <!-- Loading indicator -->
+  <circle cx="642" cy="2000" r="20" fill="#2563EB" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="692" cy="2000" r="20" fill="#2563EB" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.8;0.6" dur="1.5s" repeatCount="indefinite" begin="0.3s"/>
+  </circle>
+  <circle cx="592" cy="2000" r="20" fill="#2563EB" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="1.5s" repeatCount="indefinite" begin="0.6s"/>
+  </circle>
+  
+  <!-- Decorative elements -->
+  <circle cx="150" cy="500" r="30" fill="#2563EB" opacity="0.1"/>
+  <circle cx="1134" cy="2200" r="30" fill="#2563EB" opacity="0.1"/>
+  <circle cx="1134" cy="500" r="20" fill="#2563EB" opacity="0.08"/>
+  <circle cx="150" cy="2200" r="20" fill="#2563EB" opacity="0.08"/>
+</svg>

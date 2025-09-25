@@ -6,7 +6,9 @@ PROJECT STRUCTURE:
 ├── .gitignore
 ├── backend
 │   ├── .env
-│   ├── clean-database-setup.js
+│   ├── .expo
+│   │   ├── README.md
+│   │   └── devices.json
 │   ├── config
 │   │   └── database.js
 │   ├── controllers
@@ -35,7 +37,12 @@ PROJECT STRUCTURE:
 │   └── uploads
 │       ├── 1758303426762.jpg
 │       ├── 1758303725935.jpg
-│       └── 1758303866501.jpg
+│       ├── 1758303866501.jpg
+│       ├── 1758354380948.jpg
+│       ├── 1758354636643.jpg
+│       ├── 1758357008390.jpg
+│       ├── 1758357026907.jpg
+│       └── 1758357065435.jpg
 ├── combine.py
 ├── mobile-app
 │   ├── .expo
@@ -233,10 +240,11 @@ with open(output_file, "w", encoding="utf-8") as outfile:
     "expo-font": "~14.0.8",
     "expo-image-picker": "~17.0.8",
     "expo-linking": "~8.0.8",
-    "expo-router": "~6.0.6",
+    "expo-router": "~6.0.7",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
-    "react": "^19.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.4",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-safe-area-context": "~5.6.0",
@@ -2315,7 +2323,10 @@ export default function LoginScreen() {
       console.log('🔐 Starting login process...');
       
       // Call the API using our service
-      const result = await authAPI.login(identifier.trim(), password);
+      const result = await authAPI.login({ 
+        identifier: identifier.trim(), 
+        password: password 
+      });
       
       if (result.success) {
         console.log('✅ Login successful');
@@ -11444,7 +11455,7 @@ startServer();
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -11483,210 +11494,6 @@ startServer();
   }
 }
 
-
-# ==== ./backend/clean-database-setup.js ====
-
-// Save this as: backend/clean-database-setup.js
-const { sequelize } = require('./config/database');
-const User = require('./models/User');
-const Event = require('./models/Event');
-const Attendance = require('./models/Attendance');
-const bcrypt = require('bcryptjs');
-const QRCode = require('qrcode');
-
-async function cleanDatabaseSetup() {
-  try {
-    console.log('🧹 Starting clean database setup...');
-    
-    // Connect to database
-    await sequelize.authenticate();
-    console.log('✅ Database connected');
-
-    // Force sync (this will drop all tables and recreate them)
-    console.log('🔄 Dropping and recreating all tables...');
-    await sequelize.sync({ force: true });
-    console.log('✅ Database schema created');
-
-    // Create admin user
-    console.log('👤 Creating admin user...');
-    const adminPassword = await bcrypt.hash('Pass1', 12);
-    const adminMembershipId = `GJF${Date.now().toString().slice(-6)}`;
-    const adminQrData = JSON.stringify({ membershipId: adminMembershipId });
-    const adminQrCode = await QRCode.toDataURL(adminQrData);
-
-    const adminUser = await User.create({
-      membershipId: adminMembershipId,
-      fullName: 'Admin User',
-      fatherName: 'Admin Father',
-      email: 'admin@gmail.com',
-      phone: '1234567890',
-      dateOfBirth: new Date('1990-01-01'),
-      address: '123 Admin Street, Admin City',
-      password: adminPassword,
-      role: 'admin',
-      occupation: 'Administrator',
-      constituency: 'Admin Constituency',
-      gender: 'male',
-      city: 'Admin City',
-      state: 'Admin State',
-      pincode: '123456',
-      isActive: true,
-      isVerified: true,
-      qrCode: adminQrCode,
-      qrCodeData: adminQrData
-    });
-
-    console.log('✅ Admin user created:', adminUser.email);
-
-    // Create test organizer (user1)
-    console.log('👤 Creating organizer user...');
-    const organizerPassword = await bcrypt.hash('Pass1', 12);
-    const organizerMembershipId = `GJF${(Date.now() + 1000).toString().slice(-6)}`;
-    const organizerQrData = JSON.stringify({ membershipId: organizerMembershipId });
-    const organizerQrCode = await QRCode.toDataURL(organizerQrData);
-
-    const organizerUser = await User.create({
-      membershipId: organizerMembershipId,
-      fullName: 'User One',
-      fatherName: 'User One Father',
-      email: 'user1@gmail.com',
-      phone: '1234567891',
-      dateOfBirth: new Date('1985-06-15'),
-      address: '456 Organizer Street, Organizer City',
-      password: organizerPassword,
-      role: 'organizer',
-      occupation: 'Community Organizer',
-      constituency: 'Organizer Constituency',
-      gender: 'female',
-      city: 'Organizer City',
-      state: 'Organizer State',
-      pincode: '654321',
-      isActive: true,
-      isVerified: true,
-      qrCode: organizerQrCode,
-      qrCodeData: organizerQrData
-    });
-
-    console.log('✅ Organizer user created:', organizerUser.email);
-
-    // Create test member (user2)
-    console.log('👤 Creating member user...');
-    const memberPassword = await bcrypt.hash('Pass1', 12);
-    const memberMembershipId = `GJF${(Date.now() + 2000).toString().slice(-6)}`;
-    const memberQrData = JSON.stringify({ membershipId: memberMembershipId });
-    const memberQrCode = await QRCode.toDataURL(memberQrData);
-
-    const memberUser = await User.create({
-      membershipId: memberMembershipId,
-      fullName: 'User Two',
-      fatherName: 'User Two Father',
-      email: 'user2@gmail.com',
-      phone: '1234567892',
-      dateOfBirth: new Date('1995-03-20'),
-      address: '789 Member Street, Member City',
-      password: memberPassword,
-      role: 'member',
-      occupation: 'Software Developer',
-      constituency: 'Member Constituency',
-      gender: 'male',
-      city: 'Member City',
-      state: 'Member State',
-      pincode: '789012',
-      isActive: true,
-      isVerified: true,
-      qrCode: memberQrCode,
-      qrCodeData: memberQrData
-    });
-
-    console.log('✅ Member user created:', memberUser.email);
-
-    // Create a sample event
-    console.log('📅 Creating sample event...');
-    const sampleEvent = await Event.create({
-      title: 'Welcome Meeting',
-      description: 'Welcome meeting for new members',
-      eventDate: new Date('2025-09-25'),
-      startTime: '18:00',
-      endTime: '20:00',
-      location: 'Community Hall',
-      address: '123 Community Street, City Center',
-      eventType: 'meeting',
-      maxAttendees: 50,
-      isActive: true,
-      createdBy: adminUser.id
-    });
-
-    console.log('✅ Sample event created:', sampleEvent.title);
-
-    // Create sample attendance records
-    console.log('📝 Creating sample attendance records...');
-    
-    const attendance1 = await Attendance.create({
-      userId: organizerUser.id,
-      eventId: sampleEvent.id,
-      location: 'Community Hall',
-      attendanceType: 'event',
-      checkInTime: new Date('2025-09-19T18:15:00'),
-      markedBy: adminUser.id,
-      status: 'present'
-    });
-
-    const attendance2 = await Attendance.create({
-      userId: memberUser.id,
-      location: 'Main Office',
-      attendanceType: 'location_visit',
-      checkInTime: new Date('2025-09-19T14:30:00'),
-      checkOutTime: new Date('2025-09-19T16:45:00'),
-      markedBy: adminUser.id,
-      status: 'present'
-    });
-
-    console.log('✅ Sample attendance records created');
-
-    console.log('\n🎉 Clean database setup completed successfully!');
-    console.log('═══════════════════════════════════════════');
-    console.log('📝 Test Login Credentials:');
-    console.log('');
-    console.log('👑 ADMIN:');
-    console.log('   📧 Email: admin@gmail.com');
-    console.log('   🔑 Password: Pass1');
-    console.log(`   🆔 Membership ID: ${adminMembershipId}`);
-    console.log('');
-    console.log('🎯 ORGANIZER (User1):');
-    console.log('   📧 Email: user1@gmail.com');
-    console.log('   🔑 Password: Pass1');
-    console.log(`   🆔 Membership ID: ${organizerMembershipId}`);
-    console.log('');
-    console.log('👤 MEMBER (User2):');
-    console.log('   📧 Email: user2@gmail.com');
-    console.log('   🔑 Password: Pass1');
-    console.log(`   🆔 Membership ID: ${memberMembershipId}`);
-    console.log('');
-    console.log('📅 Sample Event: Welcome Meeting (2025-09-25)');
-    console.log('📊 Sample Attendance: 2 records created');
-    console.log('═══════════════════════════════════════════');
-    console.log('💡 Next steps:');
-    console.log('   1. Run: npm start');
-    console.log('   2. Login with any of the above credentials');
-    console.log('   3. Test member details by clicking on users');
-    console.log('   4. Check attendance reports');
-
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error during clean setup:', error);
-    
-    if (error.name === 'SequelizeValidationError') {
-      console.error('Validation errors:');
-      error.errors.forEach(err => {
-        console.error(`  - ${err.path}: ${err.message}`);
-      });
-    }
-    
-    process.exit(1);
-  }
-}
-
-cleanDatabaseSetup();
 
 # ==== ./backend/middleware/auth.js ====
 
@@ -11740,34 +11547,127 @@ const adminOnlyAuth = (req, res, next) => {
 
 module.exports = { auth, adminAuth, adminOnlyAuth };
 
+# ==== ./backend/.expo/devices.json ====
+
+{
+  "devices": []
+}
+
+
 # ==== ./backend/config/database.js ====
 
+// backend/config/database.js - IMPROVED VERSION
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: path.join(__dirname, '../database.sqlite'),
-  logging: false,
+  logging: false, // Set to console.log to see SQL queries during debugging
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
 });
 
 const connectDB = async () => {
   try {
+    console.log('🔌 Testing database connection...');
     await sequelize.authenticate();
-    console.log('Database connected successfully');
+    console.log('✅ Database connected successfully');
     
-    // Disable foreign key checks during sync
-    await sequelize.query('PRAGMA foreign_keys = OFF;');
+    console.log('📄 Syncing database...');
     
-    await sequelize.sync({ alter: true });
+    // Try different sync strategies
+    try {
+      // Strategy 1: No alter, just ensure tables exist
+      await sequelize.sync();
+      console.log('✅ Database synced successfully');
+    } catch (syncError) {
+      console.log('⚠️  Basic sync failed, trying without alter...');
+      
+      try {
+        // Strategy 2: Force recreate if basic sync fails
+        console.log('🔄 Creating fresh database schema...');
+        await sequelize.sync({ force: true });
+        console.log('✅ Database force synced (fresh start)');
+        
+        // Create default admin user after force sync
+        await createDefaultAdmin();
+      } catch (forceError) {
+        console.error('❌ Force sync also failed:', forceError);
+        console.log('💡 Please run one of these fix scripts:');
+        console.log('   node comprehensive-database-fix.js');
+        console.log('   node direct-sqlite-fix.js');
+        console.log('   Or delete database.sqlite for fresh start');
+        process.exit(1);
+      }
+    }
     
-    // Re-enable foreign key checks
-    await sequelize.query('PRAGMA foreign_keys = ON;');
-    
-    console.log('Database tables created/updated');
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('❌ Database connection error:', error);
+    
+    // Provide helpful error messages
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      console.log('💡 Unique constraint error detected. Try these solutions:');
+      console.log('   1. node comprehensive-database-fix.js');
+      console.log('   2. node direct-sqlite-fix.js');
+      console.log('   3. rm database.sqlite (fresh start)');
+    }
+    
     process.exit(1);
+  }
+};
+
+// Create default admin user after force sync
+const createDefaultAdmin = async () => {
+  try {
+    const User = require('../models/User');
+    const bcrypt = require('bcryptjs');
+    const QRCode = require('qrcode');
+
+    // Check if admin already exists
+    const existingAdmin = await User.findOne({ where: { role: 'admin' } });
+    if (existingAdmin) {
+      console.log('ℹ️  Admin user already exists');
+      return;
+    }
+
+    console.log('👤 Creating default admin user...');
+    
+    const adminPassword = await bcrypt.hash('pass1', 12);
+    const adminMembershipId = `GJF${Date.now().toString().slice(-6)}`;
+    const adminQrData = JSON.stringify({ membershipId: adminMembershipId });
+    const adminQrCode = await QRCode.toDataURL(adminQrData);
+
+    await User.create({
+      membershipId: adminMembershipId,
+      fullName: 'System Administrator',
+      fatherName: 'Admin Father',
+      email: 'admin@egmail.com',
+      phone: '9999999999',
+      dateOfBirth: new Date('1990-01-01'),
+      address: 'System Address',
+      password: adminPassword,
+      role: 'admin',
+      occupation: 'Administrator',
+      constituency: 'System',
+      gender: 'other',
+      city: 'System City',
+      state: 'System State',
+      pincode: '000000',
+      isActive: true,
+      isVerified: true,
+      qrCode: adminQrCode,
+      qrCodeData: adminQrData
+    });
+
+    console.log('✅ Default admin created - Email: admin@egmail.com, Password: pass1');
+    
+  } catch (error) {
+    console.error('❌ Error creating default admin:', error);
   }
 };
 
@@ -11917,6 +11817,7 @@ module.exports = Event;
 
 # ==== ./backend/models/User.js ====
 
+// backend/models/User.js - FIXED VERSION (removes password hashing hooks)
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const bcrypt = require('bcryptjs');
@@ -12044,11 +11945,14 @@ const User = sequelize.define('User', {
   timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
-      // Hash password if provided
-      if (user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
+      // 🔥 REMOVED: Password hashing (controller handles this now)
+      // ❌ OLD CODE: 
+      // if (user.password) {
+      //   const salt = await bcrypt.genSalt(10);
+      //   user.password = await bcrypt.hash(user.password, salt);
+      // }
+      
+      // ✅ KEEP: Other hooks that don't conflict
       
       // Generate membership ID if not provided
       if (!user.membershipId) {
@@ -12068,11 +11972,14 @@ const User = sequelize.define('User', {
       }
     },
     beforeUpdate: async (user) => {
-      // Hash password if changed
-      if (user.changed('password') && user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
+      // 🔥 REMOVED: Password hashing (manual updates handle this)
+      // ❌ OLD CODE:
+      // if (user.changed('password') && user.password) {
+      //   const salt = await bcrypt.genSalt(10);
+      //   user.password = await bcrypt.hash(user.password, salt);
+      // }
+      
+      // ✅ KEEP: Other hooks that don't conflict
       
       // Clean empty aadharNumber to null
       if (user.changed('aadharNumber') && user.aadharNumber === '') {
@@ -12087,12 +11994,12 @@ const User = sequelize.define('User', {
   }
 });
 
-// Instance method to check password
+// ✅ KEEP: Instance method to check password
 User.prototype.validatePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
 
-// Instance method to get public profile
+// ✅ KEEP: Instance method to get public profile
 User.prototype.getPublicProfile = function() {
   const { password, ...publicData } = this.toJSON();
   return {
@@ -13548,7 +13455,7 @@ const login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
-    console.log('🔐 Login attempt for:', identifier ? identifier.substring(0, 3) + '***' : 'missing');
+    
 
     // Validate input
     if (!identifier || !password) {

@@ -1,0 +1,24 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="180" fill="#2563EB"/>
+  
+  <!-- IGJF Text -->
+  <text x="512" y="400" font-family="Arial, sans-serif" font-size="180" font-weight="bold" text-anchor="middle" fill="white">IGJF</text>
+  
+  <!-- Subtitle -->
+  <text x="512" y="520" font-family="Arial, sans-serif" font-size="60" text-anchor="middle" fill="#E5E7EB">Member App</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="200" cy="200" r="40" fill="white" opacity="0.2"/>
+  <circle cx="824" cy="824" r="40" fill="white" opacity="0.2"/>
+  <circle cx="824" cy="200" r="25" fill="white" opacity="0.15"/>
+  <circle cx="200" cy="824" r="25" fill="white" opacity="0.15"/>
+  
+  <!-- QR Code icon representation -->
+  <rect x="400" y="600" width="224" height="224" rx="20" fill="white" opacity="0.9"/>
+  <rect x="420" y="620" width="60" height="60" rx="8" fill="#2563EB"/>
+  <rect x="544" y="620" width="60" height="60" rx="8" fill="#2563EB"/>
+  <rect x="420" y="744" width="60" height="60" rx="8" fill="#2563EB"/>
+  <rect x="544" y="744" width="60" height="60" rx="8" fill="#2563EB"/>
+  <rect x="482" y="682" width="60" height="60" rx="8" fill="#2563EB"/>
+</svg>

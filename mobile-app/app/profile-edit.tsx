@@ -73,7 +73,7 @@ export default function ProfileEditScreen() {
     if (user?.profilePhoto) {
       return user.profilePhoto.startsWith('http') 
         ? user.profilePhoto 
-        : `http://192.168.1.65:5000/${user.profilePhoto}`;
+        : `https://igjf-app.onrender.com/${user.profilePhoto}`;
     }
     return null;
   };
@@ -237,7 +237,7 @@ export default function ProfileEditScreen() {
 
       console.log('🔄 Updating profile...');
 
-      const response = await fetch('http://192.168.1.65:5000/api/members/profile', {
+      const response = await fetch('https://igjf-app.onrender.com/api/members/profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

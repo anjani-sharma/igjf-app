@@ -123,7 +123,7 @@ export default function AttendanceReports() {
   };
 
   const loadAttendanceRecords = async (token: string | null) => {
-    const response = await fetch('http://192.168.1.65:5000/api/events/attendance/records', {
+    const response = await fetch('https://igjf-app.onrender.com/api/events/attendance/reports', {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

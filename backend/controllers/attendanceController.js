@@ -38,7 +38,7 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    console.log('👤 Found member:', user.fullName, '- ID:', user.membershipId);
+    
 
     // Handle event attendance
     let eventId = null;
@@ -55,7 +55,7 @@ const markAttendance = async (req, res) => {
       eventId = event.id;
       finalLocation = event.location || 'Event Location'; // Use event location
       
-      console.log('📅 Event found:', event.title, 'at', finalLocation);
+      
       
       // Check if already marked for this event
       const existingAttendance = await Attendance.findOne({

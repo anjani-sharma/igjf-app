@@ -19,7 +19,8 @@ import { useAuth } from '../contexts/AuthContext';
 import QRCode from 'react-native-qrcode-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest } from '../utils/apiUtils';
-import { User } from '../contexts/AuthContext'; 
+import { User } from '../contexts/AuthContext';
+import DebugAuthClear from '../components/DebugAuthClear'; 
 
 // Party flag image - Comment this out if you don't have the flag image
 // const partyFlag = require('./images/flag.jpeg');
@@ -211,7 +212,7 @@ export default function Dashboard() {
         imageUri = photoPath;
       } else {
         const cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
-        imageUri = `http://192.168.1.65:5000/${cleanPath}`;
+        imageUri = `https://igjf-app.onrender.com/${cleanPath}`;
       }
       
       return imageUri;
@@ -255,9 +256,12 @@ export default function Dashboard() {
               </Text>
               <Text style={styles.nameText}>{getDisplayName()}</Text>
             </View>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'column', gap: 8 }}>
+              <DebugAuthClear />
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Text style={styles.logoutText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 

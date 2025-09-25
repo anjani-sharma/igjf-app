@@ -278,6 +278,23 @@ const deleteMember = async (req, res) => {
       role: member.role
     };
     
+    // Clean up profile photo file before deleting member
+    if (member.profilePhoto && member.profilePhoto.startsWith('uploads/')) {
+      const fs = require('fs');
+      const path = require('path');
+      const profilePhotoPath = path.join(__dirname, '..', member.profilePhoto);
+      
+      try {
+        if (fs.existsSync(profilePhotoPath)) {
+          fs.unlinkSync(profilePhotoPath);
+          console.log('🗑️ Deleted profile photo for deleted member:', member.profilePhoto);
+        }
+      } catch (error) {
+        console.error('⚠️ Error deleting profile photo for deleted member:', error.message);
+        // Don't fail the deletion if file deletion fails
+      }
+    }
+    
     await member.destroy();
 
     console.log('✅ Member deleted:', memberInfo);
@@ -359,9 +376,30 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // Handle profile photo
+    // Handle profile photo with cleanup of old file
     if (req.file) {
+      // Get the old profile photo path before updating
+      const oldProfilePhoto = user.profilePhoto;
+      
+      // Set new profile photo path
       cleanUpdateData.profilePhoto = `uploads/${req.file.filename}`;
+      
+      // Clean up old profile photo file if it exists
+      if (oldProfilePhoto && oldProfilePhoto.startsWith('uploads/')) {
+        const fs = require('fs');
+        const path = require('path');
+        const oldFilePath = path.join(__dirname, '..', oldProfilePhoto);
+        
+        try {
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+            console.log('🗑️ Deleted old profile photo:', oldProfilePhoto);
+          }
+        } catch (error) {
+          console.error('⚠️ Error deleting old profile photo:', error.message);
+          // Don't fail the update if file deletion fails
+        }
+      }
     }
 
     console.log('🧹 Cleaned update data:', cleanUpdateData);

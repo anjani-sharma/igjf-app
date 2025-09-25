@@ -27,7 +27,7 @@ export default function RoleManagement() {
   const loadMembers = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch('http://192.168.1.65:5000/api/members/all', {
+      const response = await fetch('https://igjf-app.onrender.com/api/members/all', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -51,7 +51,7 @@ export default function RoleManagement() {
     try {
       console.log('Updating member:', memberId, 'to role:', newRole);
       const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`http://192.168.1.65:5000/api/members/role/${memberId}`, {
+      const response = await fetch(`https://igjf-app.onrender.com/api/members/role/${memberId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -93,7 +93,7 @@ export default function RoleManagement() {
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('token');
-              const response = await fetch(`http://192.168.1.65:5000/api/members/${memberId}`, {
+              const response = await fetch(`https://igjf-app.onrender.com/api/members/${memberId}`, {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${token}`,
