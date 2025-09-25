@@ -2,6 +2,10 @@
   "name": "mobile-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=20.19.4",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
