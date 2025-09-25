@@ -21,60 +21,11 @@ services:
     plan: free
     branch: deployment-cleanup
     rootDir: mobile-app
-    buildCommand: npm run build:web
+    buildCommand: npm run build:web && cp -r dist/server/* dist/ && cp -r dist/client/_expo dist/ && cp -r dist/client/assets dist/
     staticPublishPath: dist
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://igjf-app.onrender.com/api
-    routes:
-      - type: rewrite
-        source: /
-        destination: /server/index.html
-      - type: rewrite
-        source: /admin
-        destination: /server/admin.html
-      - type: rewrite
-        source: /login
-        destination: /server/login.html
-      - type: rewrite
-        source: /register
-        destination: /server/register.html
-      - type: rewrite
-        source: /dashboard
-        destination: /server/dashboard.html
-      - type: rewrite
-        source: /events
-        destination: /server/events.html
-      - type: rewrite
-        source: /members
-        destination: /server/members.html
-      - type: rewrite
-        source: /scanner
-        destination: /server/scanner.html
-      - type: rewrite
-        source: /roles
-        destination: /server/roles.html
-      - type: rewrite
-        source: /create-event
-        destination: /server/create-event.html
-      - type: rewrite
-        source: /event-detail
-        destination: /server/event-detail.html
-      - type: rewrite
-        source: /profile-edit
-        destination: /server/profile-edit.html
-      - type: rewrite
-        source: /member-details
-        destination: /server/member-details.html
-      - type: rewrite
-        source: /attendance-reports
-        destination: /server/attendance-reports.html
-      - type: rewrite
-        source: /attendance-scanner
-        destination: /server/attendance-scanner.html
-      - type: rewrite
-        source: /location-attendance
-        destination: /server/location-attendance.html
     headers:
       - path: /*
         name: X-Frame-Options
