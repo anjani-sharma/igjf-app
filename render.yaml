@@ -16,7 +16,7 @@ services:
 
   - type: static
     name: igjf-frontend
-    region: singapore
+    region: global
     plan: free
     branch: deployment-cleanup
     staticPublishPath: mobile-app/dist-merged
