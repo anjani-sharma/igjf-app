@@ -14,7 +14,7 @@
     "build": "expo export --platform web --output-dir dist-merged --clear",
     "build:web": "expo export --platform web --output-dir dist --clear",
     "reset-project": "node ./scripts/reset-project.js",
-    "postinstall": "npm rebuild lightningcss --platform=linux --arch=x64 || true"
+    "postinstall": "node scripts/fix-lightningcss.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -30,6 +30,7 @@
     "expo-router": "~6.0.7",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
+    "lightningcss": "^1.21.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.4",
