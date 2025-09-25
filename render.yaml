@@ -19,7 +19,7 @@ services:
     region: oregon
     plan: free
     branch: deployment-cleanup
-    buildCommand: cd mobile-app && ./build.sh
+    buildCommand: cd mobile-app && bash build.sh
     staticPublishPath: mobile-app/dist-merged
     headers:
       - path: /*
