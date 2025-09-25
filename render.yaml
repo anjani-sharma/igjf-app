@@ -20,6 +20,7 @@ services:
     region: global
     plan: free
     branch: deployment-cleanup
+    buildCommand: null
     staticPublishPath: static-site
     envVars:
       - key: EXPO_PUBLIC_API_URL
