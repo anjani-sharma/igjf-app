@@ -1,87 +1,35 @@
 services:
   - type: web
     name: igjf-backend
-    env: node
-    region: singapore
+    runtime: node
     plan: free
-    branch: deployment-cleanup
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        fromDatabase:
+          name: igjf-mongodb
+          property: connectionString
+    autoDeploy: false
 
   - type: static
     name: igjf-frontend
-    region: global
-    plan: free
-    branch: deployment-cleanup
-    rootDir: mobile-app
-    buildCommand: npm run build:web
-    staticPublishPath: dist
+    buildCommand: cd mobile-app && npm install && npm run build:web && cp -r dist/server/* dist/ && cp -r dist/client/_expo dist/ && cp -r dist/client/assets dist/
+    staticPublishPath: mobile-app/dist
     envVars:
-      - key: EXPO_PUBLIC_API_URL
-        value: https://igjf-app.onrender.com/api
-    routes:
-      - type: rewrite
-        source: /
-        destination: /server/index.html
-      - type: rewrite
-        source: /admin
-        destination: /server/admin.html
-      - type: rewrite
-        source: /login
-        destination: /server/login.html
-      - type: rewrite
-        source: /register
-        destination: /server/register.html
-      - type: rewrite
-        source: /dashboard
-        destination: /server/dashboard.html
-      - type: rewrite
-        source: /events
-        destination: /server/events.html
-      - type: rewrite
-        source: /members
-        destination: /server/members.html
-      - type: rewrite
-        source: /scanner
-        destination: /server/scanner.html
-      - type: rewrite
-        source: /roles
-        destination: /server/roles.html
-      - type: rewrite
-        source: /create-event
-        destination: /server/create-event.html
-      - type: rewrite
-        source: /event-detail
-        destination: /server/event-detail.html
-      - type: rewrite
-        source: /profile-edit
-        destination: /server/profile-edit.html
-      - type: rewrite
-        source: /member-details
-        destination: /server/member-details.html
-      - type: rewrite
-        source: /attendance-reports
-        destination: /server/attendance-reports.html
-      - type: rewrite
-        source: /attendance-scanner
-        destination: /server/attendance-scanner.html
-      - type: rewrite
-        source: /location-attendance
-        destination: /server/location-attendance.html
-      - type: rewrite
-        source: /*
-        destination: /server/index.html
+      - key: NODE_ENV
+        value: production
+    branch: deployment-cleanup
     headers:
-      - path: /*
-        name: X-Frame-Options
+      - name: X-Frame-Options
         value: DENY
-      - path: /*
-        name: X-Content-Type-Options
+      - name: X-Content-Type-Options
         value: nosniff
+
+databases:
+  - name: igjf-mongodb
+    plan: free
