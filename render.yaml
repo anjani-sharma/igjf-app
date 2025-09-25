@@ -19,6 +19,7 @@ services:
     region: global
     plan: free
     branch: deployment-cleanup
+    buildCommand: echo "No build needed - using pre-built files"
     staticPublishPath: mobile-app/dist-merged
     headers:
       - path: /*
