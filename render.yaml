@@ -17,9 +17,18 @@ services:
     autoDeploy: false
 
   - type: static
-    name: igjf-frontend-test
-    buildCommand: echo "No build needed for static HTML"
-    staticPublishPath: test-frontend
+    name: igjf-frontend-expo
+    buildCommand: |
+      echo "Using pre-built Expo static files"
+      cd mobile-app
+      if [ ! -d "dist" ]; then
+        echo "Error: dist directory not found. Please build locally first."
+        exit 1
+      fi
+      echo "Copying pre-built files..."
+      mkdir -p ../static-deployment
+      cp -r dist/* ../static-deployment/
+    staticPublishPath: static-deployment/server
     branch: deployment-cleanup
     headers:
       - name: X-Frame-Options
