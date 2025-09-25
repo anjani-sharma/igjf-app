@@ -19,7 +19,7 @@ services:
     region: global
     plan: free
     branch: deployment-cleanup
-    buildCommand: cd mobile-app && npm install && npm run build
+    buildCommand: echo "Using pre-built files from dist-merged"
     staticPublishPath: mobile-app/dist-merged
     envVars:
       - key: EXPO_PUBLIC_API_URL
