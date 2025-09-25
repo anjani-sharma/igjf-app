@@ -18,8 +18,7 @@ services:
 
   - type: static
     name: igjf-frontend-expo
-    buildCommand: cd src/mobile-app && rm -rf node_modules package-lock.json && npm install && npm run build:web
-    staticPublishPath: src/mobile-app/dist
+    staticPublishPath: static-deployment/server
     branch: deployment-cleanup
     headers:
       - name: X-Frame-Options
