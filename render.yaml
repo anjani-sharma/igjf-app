@@ -19,7 +19,7 @@ services:
     region: global
     plan: free
     branch: deployment-cleanup
-    staticPublishPath: mobile-app/dist-merged
+    staticPublishPath: static-site
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://igjf-app.onrender.com/api
