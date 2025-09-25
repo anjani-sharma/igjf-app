@@ -21,8 +21,8 @@ services:
     plan: free
     branch: deployment-cleanup
     rootDir: mobile-app
-    buildCommand: chmod +x build.sh && ./build.sh
-    staticPublishPath: dist-merged
+    buildCommand: npm run build:web
+    staticPublishPath: dist
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://igjf-app.onrender.com/api
