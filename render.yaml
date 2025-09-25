@@ -20,8 +20,9 @@ services:
     region: global
     plan: free
     branch: deployment-cleanup
-    buildCommand: null
-    staticPublishPath: static-site
+    rootDir: mobile-app
+    buildCommand: chmod +x build.sh && ./build.sh
+    staticPublishPath: dist-merged
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://igjf-app.onrender.com/api
