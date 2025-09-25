@@ -19,7 +19,6 @@ services:
     region: oregon
     plan: free
     branch: deployment-cleanup
-    buildCommand: cd mobile-app && npm install && npm run build:web && mkdir -p dist-merged && cp -r dist/server/* dist-merged/ && cp -r dist/client/* dist-merged/
     staticPublishPath: mobile-app/dist-merged
     headers:
       - path: /*
