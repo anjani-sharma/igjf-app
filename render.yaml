@@ -2,7 +2,7 @@ services:
   - type: web
     name: igjf-backend
     env: node
-    region: oregon
+    region: singapore
     plan: free
     branch: deployment-cleanup
     buildCommand: cd backend && npm install
@@ -16,7 +16,7 @@ services:
 
   - type: static
     name: igjf-frontend
-    region: oregon
+    region: singapore
     plan: free
     branch: deployment-cleanup
     staticPublishPath: mobile-app/dist-merged
