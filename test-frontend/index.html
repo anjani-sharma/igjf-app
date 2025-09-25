@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IGJF Test Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .nav a {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .nav a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 IGJF Test Frontend</h1>
+        
+        <div class="status">
+            ✅ Static hosting is working!
+        </div>
+        
+        <p>This is a minimal test frontend to verify that Render's static hosting works correctly.</p>
+        
+        <div class="nav">
+            <a href="/">Home</a>
+            <a href="/login.html">Login</a>
+            <a href="/dashboard.html">Dashboard</a>
+        </div>
+        
+        <h3>Test Results:</h3>
+        <ul id="test-results">
+            <li>✅ HTML loading</li>
+            <li>✅ CSS styling</li>
+            <li id="js-test">⏳ JavaScript loading...</li>
+        </ul>
+        
+        <div id="timestamp"></div>
+    </div>
+
+    <script>
+        // Simple JavaScript test
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('js-test').innerHTML = '✅ JavaScript working';
+            document.getElementById('timestamp').innerHTML = 
+                '<p><strong>Loaded at:</strong> ' + new Date().toLocaleString() + '</p>';
+        });
+    </script>
+</body>
+</html>
