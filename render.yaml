@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     branch: deployment-cleanup
-    buildCommand: cd backend && npm install
+    buildCommand: cd backend && npm install && npm run postinstall
     startCommand: cd backend && npm start
     healthCheckPath: /
     envVars:
