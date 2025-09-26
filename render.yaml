@@ -19,7 +19,7 @@ services:
 
   - type: static
     name: igjf-frontend-expo
-    staticPublishPath: dist/server
+    staticPublishPath: dist
     rootDirectory: mobile-app
     branch: deployment-cleanup
     headers:

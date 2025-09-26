@@ -86,7 +86,7 @@ app.get('/api/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'Gorkha Janshakti Front API Server',
+    message: 'Indian Gorkha Janshakti Front API Server',
     status: 'Running',
     endpoints: {
       health: '/health',
