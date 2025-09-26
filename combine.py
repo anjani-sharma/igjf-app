@@ -19,7 +19,7 @@ skip_files = {
 # Folders to skip
 skip_dirs = {"node_modules", "__pycache__", ".git"}
 
-output_file = "project_code.txt"
+output_file = "project_code_structure.txt"
 
 def get_tree(path, prefix=""):
     """Return a string representing the folder tree."""

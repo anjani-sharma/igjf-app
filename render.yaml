@@ -17,7 +17,7 @@ services:
     autoDeploy: false
 
   - type: static
-    name: igjf-frontend
+    name: igjf-frontend-expo
     staticPublishPath: dist
     rootDirectory: mobile-app
     branch: deployment-cleanup
