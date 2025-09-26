@@ -1,17 +1,16 @@
-// mobile-app/services/apiService.js
+// mobile-app/services/apiService.js - FIXED VERSION
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Environment-based API configuration
 const getApiBaseUrl = () => {
-  // Always use production for deployed builds
   return 'https://igjf-app.onrender.com/api';
 };
 
 export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
-  TIMEOUT: 10000,
+  TIMEOUT: 30000, // Increased timeout
   RETRY_ATTEMPTS: 2,
-  RETRY_DELAY: 1000,
+  RETRY_DELAY: 2000, // Increased retry delay
 };
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -29,6 +28,7 @@ export const apiRequest = async (endpoint, options = {}) => {
   
   const headers = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     ...fetchOptions.headers,
   };
 
@@ -47,25 +47,39 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   for (let attempt = 0; attempt <= retryAttempts; attempt++) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
       console.log(`🌐 API Request: ${fetchOptions.method || 'GET'} ${url} (attempt ${attempt + 1})`);
+      console.log(`📝 Headers:`, headers);
+      console.log(`📦 Body:`, fetchOptions.body ? 'Present' : 'None');
 
-      const response = await fetch(url, {
+      // Use a more compatible timeout approach for React Native Web
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), timeout)
+      );
+
+      const fetchPromise = fetch(url, {
         ...fetchOptions,
         headers,
-        signal: controller.signal,
+        mode: 'cors', // Explicitly set CORS mode
       });
 
-      clearTimeout(timeoutId);
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+
       console.log(`📡 Response: ${response.status} ${response.statusText}`);
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('❌ Non-JSON response:', contentType);
+        throw new Error('Server returned non-JSON response');
+      }
 
       const data = await response.json();
 
       if (response.ok) {
+        console.log('✅ Request successful:', data);
         return { success: true, data, status: response.status };
       } else {
+        console.log('❌ Request failed:', data);
         return { success: false, error: data.message || 'Request failed', status: response.status, data };
       }
     } catch (error) {
@@ -73,10 +87,12 @@ export const apiRequest = async (endpoint, options = {}) => {
       
       if (attempt === retryAttempts) {
         let errorMessage = 'Network error. Please try again.';
-        if (error.name === 'AbortError') {
+        if (error.message.includes('timeout') || error.message.includes('aborted')) {
           errorMessage = 'Request timed out. Please check your connection.';
         } else if (error.message.includes('Network request failed')) {
           errorMessage = 'Unable to connect to server. Please check your internet connection.';
+        } else if (error.message.includes('non-JSON')) {
+          errorMessage = 'Server error. Please try again later.';
         }
         throw new Error(errorMessage);
       }
@@ -87,6 +103,11 @@ export const apiRequest = async (endpoint, options = {}) => {
 
 export const authAPI = {
   login: async (credentials) => {
+    console.log('🔐 Starting login with credentials:', { 
+      identifier: credentials.identifier, 
+      password: '***' 
+    });
+    
     return apiRequest('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),

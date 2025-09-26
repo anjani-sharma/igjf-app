@@ -97,6 +97,20 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/api/auth/login', (req, res, next) => {
+  console.log('🔐 Login request received:', {
+    method: req.method,
+    headers: {
+      origin: req.headers.origin,
+      contentType: req.headers['content-type'],
+      userAgent: req.headers['user-agent']
+    },
+    body: req.body ? 'Body present' : 'No body'
+  });
+  next();
+});
+
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
