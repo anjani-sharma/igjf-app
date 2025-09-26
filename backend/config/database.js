@@ -25,21 +25,36 @@ const sequelize = new Sequelize(
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ PostgreSQL database connected successfully');
+    console.log('Database connected successfully');
     
     try {
-      await sequelize.sync();
-      console.log('✅ Database synchronized successfully');
-    } catch (syncError) {
-      console.log('⚠️ Database sync failed, attempting force sync...');
-      // If basic sync fails, try force sync
-      await sequelize.sync({ force: true });
+      // Use alter in production to avoid data loss
+      await sequelize.sync({ 
+        alter: process.env.NODE_ENV === 'production',
+        force: process.env.NODE_ENV !== 'production' 
+      });
+      console.log('Database synchronized successfully');
+      
+      // Only create admin if this is initial setup
       await createDefaultAdmin();
-      console.log('✅ Database force synced and admin created');
+      
+    } catch (syncError) {
+      console.log('Database sync failed:', syncError.message);
+      
+      // In production, don't force sync - just log and continue
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Continuing without sync in production...');
+      } else {
+        // In development, we can be more aggressive
+        console.log('Force syncing in development...');
+        await sequelize.sync({ force: true });
+        await createDefaultAdmin();
+        console.log('Database force synced and admin created');
+      }
     }
     
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
+    console.error('Database connection failed:', error.message);
     throw error;
   }
 };
@@ -50,8 +65,12 @@ const createDefaultAdmin = async () => {
     const bcrypt = require('bcryptjs');
     const QRCode = require('qrcode');
 
+    // Check if admin already exists
     const existingAdmin = await User.findOne({ where: { role: 'admin' } });
-    if (existingAdmin) return;
+    if (existingAdmin) {
+      console.log('Admin user already exists');
+      return;
+    }
 
     const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'abc1', 12);
     const adminMembershipId = `GJF${Date.now().toString().slice(-6)}`;
@@ -80,8 +99,11 @@ const createDefaultAdmin = async () => {
       qrCodeData: adminQrData
     });
     
+    console.log('Default admin created successfully');
+    
   } catch (error) {
     console.error('Failed to create default admin:', error.message);
+    // Don't throw - this shouldn't break the app startup
   }
 };
 
