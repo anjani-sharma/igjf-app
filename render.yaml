@@ -17,8 +17,9 @@ services:
     autoDeploy: false
 
   - type: static
-    name: igjf-frontend-expo
-    staticPublishPath: static-deployment/server
+    name: igjf-frontend
+    staticPublishPath: dist
+    rootDirectory: mobile-app
     branch: deployment-cleanup
     headers:
       - name: X-Frame-Options
