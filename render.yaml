@@ -4,8 +4,8 @@ services:
     runtime: node
     plan: free
     rootDirectory: backend
-    buildCommand: rm -rf node_modules package-lock.json && npm install && npm run build
-    startCommand: cd backend && npm start
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
