@@ -365,9 +365,75 @@ const markCheckout = async (req, res) => {
   }
 };
 
+// Add attendance reports function
+const getAttendanceReports = async (req, res) => {
+  try {
+    console.log('📊 Getting attendance reports for user:', req.user?.fullName);
+    
+    const { startDate, endDate, eventId } = req.query;
+    
+    let whereCondition = {};
+    
+    if (startDate && endDate) {
+      whereCondition.checkInTime = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+    
+    if (eventId) {
+      whereCondition.eventId = eventId;
+    }
+
+    // Get total attendance
+    const totalAttendance = await Attendance.count({
+      where: whereCondition
+    });
+
+    // Get recent attendance records for reports
+    const recentAttendance = await Attendance.findAll({
+      where: whereCondition,
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'fullName', 'membershipId']
+        },
+        {
+          model: Event,
+          as: 'event',
+          attributes: ['id', 'title', 'eventDate'],
+          required: false
+        }
+      ],
+      order: [['checkInTime', 'DESC']],
+      limit: 100
+    });
+
+    res.json({
+      success: true,
+      data: {
+        reports: recentAttendance,
+        summary: {
+          totalEvents: await Event.count(),
+          totalAttendees: totalAttendance,
+          averageAttendance: totalAttendance
+        }
+      },
+      message: 'Attendance reports retrieved successfully'
+    });
+  } catch (error) {
+    console.error('❌ Error getting attendance reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch attendance reports'
+    });
+  }
+};
+
 module.exports = {
   markAttendance,
   getAttendanceRecords,
   getAttendanceStats,
+  getAttendanceReports,
   markCheckout
 };
