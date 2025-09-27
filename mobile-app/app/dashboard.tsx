@@ -1,4 +1,4 @@
-// File: mobile-app/app/dashboard.tsx - FIXED LAYOUT VERSION with Flag
+// File: mobile-app/app/dashboard.tsx 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
@@ -22,8 +22,7 @@ import { apiRequest } from '../utils/apiUtils';
 import { User } from '../contexts/AuthContext';
 
 
-// Party flag image - Comment this out if you don't have the flag image
-// const partyFlag = require('./images/flag.jpeg');
+
 
 const Theme = {
   colors: {
