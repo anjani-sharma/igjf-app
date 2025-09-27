@@ -164,7 +164,7 @@ export default function Dashboard() {
   }, [loadProfile]);
 
   const handleLogout = () => {
-    console.log('🔴 LOGOUT: Button pressed');
+    console.log('LOGOUT: Button pressed');
     
     Alert.alert(
       'Logout',
@@ -174,33 +174,33 @@ export default function Dashboard() {
         { 
           text: 'Logout', 
           onPress: async () => {
-            console.log('🔴 LOGOUT: User confirmed logout');
-            console.log('🔴 LOGOUT: Current user before logout:', user?.fullName || 'No user');
+            console.log('LOGOUT: User confirmed logout');
+            console.log('LOGOUT: Current user before logout:', user?.fullName || 'No user');
             
             try {
-              console.log('🔴 LOGOUT: Calling AuthContext logout...');
+              console.log('LOGOUT: Calling AuthContext logout...');
               await logout();
-              console.log('🔴 LOGOUT: AuthContext logout completed successfully');
+              console.log('LOGOUT: AuthContext logout completed successfully');
               
               // Small delay to ensure state updates properly
               setTimeout(() => {
-                console.log('🔴 LOGOUT: Navigating to home page...');
+                console.log('LOGOUT: Navigating to home page...');
                 router.replace('/');
-                console.log('🔴 LOGOUT: Navigation command sent');
+                console.log('LOGOUT: Navigation command sent');
               }, 100);
               
             } catch (error) {
-              console.error('🔴 LOGOUT: Error during logout:', error);
+              console.error('LOGOUT: Error during logout:', error);
               
               // Fallback: Force clear everything
               try {
-                console.log('🔴 LOGOUT: Attempting fallback logout...');
+                console.log('LOGOUT: Attempting fallback logout...');
                 await AsyncStorage.multiRemove(['token', 'user']);
-                console.log('🔴 LOGOUT: Fallback storage clear completed');
+                console.log('LOGOUT: Fallback storage clear completed');
                 router.replace('/');
-                console.log('🔴 LOGOUT: Fallback navigation sent');
+                console.log('LOGOUT: Fallback navigation sent');
               } catch (fallbackError) {
-                console.error('🔴 LOGOUT: Fallback logout also failed:', fallbackError);
+                console.error('LOGOUT: Fallback logout also failed:', fallbackError);
                 Alert.alert('Error', 'Failed to logout. Please restart the app.');
               }
             }
