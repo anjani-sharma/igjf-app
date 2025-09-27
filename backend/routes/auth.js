@@ -1,9 +1,9 @@
-// backend/routes/auth.js - COMPLETE FILE WITH LOGOUT
+// backend/routes/auth.js - COMPLETE FILE
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { register, login } = require('../controllers/authController');
-const auth = require('../middleware/auth'); // Added for logout endpoint
+
 
 const router = express.Router();
 
@@ -51,26 +51,5 @@ const uploadHandler = (req, res, next) => {
 // Routes
 router.post('/register', uploadHandler, register);
 router.post('/login', login);
-
-// NEW: Logout endpoint
-router.post('/logout', auth, async (req, res) => {
-  try {
-    console.log('Backend logout called for user:', req.user.id);
-    
-    // Here you could add token blacklisting if needed in the future
-    // For now, we just acknowledge the logout
-    
-    res.json({ 
-      success: true, 
-      message: 'Logged out successfully' 
-    });
-  } catch (error) {
-    console.error('Backend logout error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Logout failed' 
-    });
-  }
-});
 
 module.exports = router;
