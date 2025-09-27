@@ -119,17 +119,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      console.log('🚪 Logging out user');
+      console.log('🚪 AuthContext: Starting logout process...');
       
+      // Get current token for backend logout
+      const token = await AsyncStorage.getItem('token');
+      
+      // Call backend logout endpoint (optional)
+      if (token) {
+        try {
+          console.log('🚪 AuthContext: Calling backend logout...');
+          const response = await fetch('https://igjf-app.onrender.com/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            console.log('✅ AuthContext: Backend logout successful');
+          } else {
+            console.log('⚠️ AuthContext: Backend logout failed, continuing with local logout');
+          }
+        } catch (backendError) {
+          console.log('⚠️ AuthContext: Backend logout error, continuing with local logout:', backendError);
+        }
+      }
+      
+      // Clear local storage (this is the most important part)
+      console.log('🚪 AuthContext: Clearing local storage...');
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
+      
+      // Clear state
+      console.log('🚪 AuthContext: Clearing user state...');
       setUser(null);
       
-      console.log('✅ User logged out successfully');
+      console.log('✅ AuthContext: Logout completed successfully');
     } catch (error) {
-      console.error('⚠️ Error removing user data:', error);
-      // Still set user to null even if storage clear fails
+      console.error('⚠️ AuthContext: Error during logout:', error);
+      // Still clear user state even if storage clear fails
       setUser(null);
+      throw error;
     }
   };
 

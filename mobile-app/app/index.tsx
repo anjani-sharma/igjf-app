@@ -17,10 +17,14 @@ export default function WelcomeScreen() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    console.log('INDEX: Auth state changed - User:', user ? 'EXISTS' : 'NULL', 'Loading:', loading);
+    
     if (!loading) {
       if (user) {
-        // Redirect all logged-in users to the main dashboard
+        console.log('INDEX: User is logged in, redirecting to dashboard');
         router.replace('/dashboard');
+      } else {
+        console.log('INDEX: User is logged out, showing welcome screen');
       }
     }
   }, [user, loading]);
@@ -30,6 +34,18 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+        <StatusBar style="light" />
+      </SafeAreaView>
+    );
+  }
+
+  // If user exists, show loading while redirecting
+  if (user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Redirecting to dashboard...</Text>
         </View>
         <StatusBar style="light" />
       </SafeAreaView>
