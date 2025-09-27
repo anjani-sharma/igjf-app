@@ -27,6 +27,8 @@ app.get('/', (req, res) => {
 
 console.log('🚀 Starting server...');
 
+
+
 // CORS configuration
 app.use(cors({
   origin: '*',
@@ -152,15 +154,26 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  console.log(`❓ Route not found: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({ 
-    message: 'Route not found',
-    path: req.originalUrl,
-    method: req.method
-  });
+
+app.get('*', (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  
+  // Serve index.html for all other routes (SPA routing)
+  res.sendFile(path.join(__dirname, '../mobile-app/dist/server/index.html'));
 });
+
+// 404 handler
+// app.use('*', (req, res) => {
+//   console.log(`❓ Route not found: ${req.method} ${req.originalUrl}`);
+//   res.status(404).json({ 
+//     message: 'Route not found',
+//     path: req.originalUrl,
+//     method: req.method
+//   });
+// });
 
 // Start server
 const startServer = async () => {
