@@ -20,7 +20,7 @@ import QRCode from 'react-native-qrcode-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest } from '../utils/apiUtils';
 import { User } from '../contexts/AuthContext';
-import DebugAuthClear from '../components/DebugAuthClear'; 
+
 
 // Party flag image - Comment this out if you don't have the flag image
 // const partyFlag = require('./images/flag.jpeg');
@@ -287,7 +287,6 @@ export default function Dashboard() {
               <Text style={styles.nameText}>{getDisplayName()}</Text>
             </View>
             <View style={{ flexDirection: 'column', gap: 8 }}>
-              <DebugAuthClear />
               <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Text style={styles.logoutText}>Logout</Text>
               </TouchableOpacity>
